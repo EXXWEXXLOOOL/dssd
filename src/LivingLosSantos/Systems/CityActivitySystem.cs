@@ -27,7 +27,7 @@ namespace LivingLosSantos.Systems
 
         public void Update()
         {
-            int hour = GTA.World.CurrentDayTime.Hours;
+            int hour = GTA.Native.Function.Call<int>(GTA.Native.Hash.GET_CLOCK_HOURS);
             if (hour >= _config.NightStart || hour < _config.MorningStart)
                 CurrentPeriod = CityPeriod.Night;
             else if (hour < 10)
