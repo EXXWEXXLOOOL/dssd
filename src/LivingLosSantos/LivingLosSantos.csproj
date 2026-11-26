@@ -10,6 +10,7 @@
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <LangVersion>7.3</LangVersion>
     <FileAlignment>512</FileAlignment>
+    <PlatformTarget>x64</PlatformTarget>
     <OutputPath>bin\$(Configuration)\</OutputPath>
     <GtaVPath Condition=" '$(GtaVPath)' == '' ">C:\Program Files\Rockstar Games\Grand Theft Auto V</GtaVPath>
   </PropertyGroup>
@@ -42,7 +43,7 @@
     <Compile Include="Systems\ICityEvent.cs" />
     <Compile Include="Systems\CityActivitySystem.cs" />
     <Compile Include="Systems\CityEventManager.cs" />
-    <Compile Include="Systems\TrafficManager.cs" />
+    <Compile Include="Systems\TrafficDensityController.cs" />
     <Compile Include="UI\CitySettingsMenu.cs" />
     <Compile Include="Systems\Events\RoadsideBreakdownEvent.cs" />
     <Compile Include="Systems\Events\RoadsideHikerEvent.cs" />

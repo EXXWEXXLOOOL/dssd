@@ -1,0 +1,22 @@
+RECOMMENDED TRAFFIC OVERHAUL FOR GTA V LEGACY 1.0.3889
+
+Los Angeles Traffic (with DLC Cars) v2.3.1 — Legacy:
+https://www.nexusmods.com/gta5/mods/1505
+
+This is a separate third-party mod and is NOT bundled in this archive.
+Download the Legacy variant, not the Enhanced variant. Follow the author's
+installation instructions and back up the original game files first.
+
+The overhaul changes popcycle.dat, popgroups.ymt and gameconfig.xml so the
+Rockstar ambient population system can create denser, region-aware traffic
+and select the added vehicle models.
+
+Its full version requires OpenIV and a mods folder. The author lists Heap
+Limit Adjuster, Script Hook V for DLC cars and a trainer for manually
+spawning DLC cars. Packfile Limit Adjuster is also recommended where needed.
+It can conflict with another custom gameconfig.xml or traffic/population mod.
+
+Living Los Santos does not bundle or redistribute these files. Its F10 menu
+only scales the ambient population configured by GTA and installed data mods.
+100% means full configured density; it does not raise the engine's population
+limits by itself.

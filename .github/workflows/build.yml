@@ -68,6 +68,7 @@ jobs:
           Copy-Item 'src/LivingLosSantos/bin/Release/LemonUI.SHVDN3.dll' $package
           Copy-Item 'THIRD_PARTY_NOTICES.txt' $package
           Copy-Item 'config.ini' $package
+          Copy-Item 'TRAFFIC_OVERHAUL.txt' $package
           Compress-Archive -Path (Join-Path $package '*') -DestinationPath 'LivingLosSantos.zip' -Force
 
       - name: Upload compiled mod

@@ -14,7 +14,6 @@ namespace LivingLosSantos
         private UpdateScheduler _scheduler;
         private CityActivitySystem _cityActivity;
         private CityEventManager _cityEvents;
-        private TrafficManager _traffic;
         private CitySettingsMenu _settingsMenu;
         private string _configPath;
         private bool _initialized;
@@ -61,14 +60,10 @@ namespace LivingLosSantos
                     _settingsMenu.Process();
 
                 if (!_config.Enabled)
-                {
-                    if (_traffic != null)
-                        _traffic.StopAll();
                     return;
-                }
 
                 // GTA frame-based density controls must be applied on every frame.
-                TrafficDensityController.ApplyFrame(_config, _cityActivity);
+                TrafficDensityController.ApplyFrame(_config);
 
                 DateTime now = DateTime.Now;
                 if (!_scheduler.IsDue(now))
@@ -76,11 +71,6 @@ namespace LivingLosSantos
 
                 if (_config.LivingCityEnabled)
                     _cityActivity.Update();
-
-                if (_config.TrafficEnabled)
-                    _traffic.Update(now);
-                else
-                    _traffic.StopAll();
 
                 if (_config.CityEventsEnabled)
                     _cityEvents.Update(now);
@@ -110,7 +100,6 @@ namespace LivingLosSantos
                 _scheduler = new UpdateScheduler(_config.UpdateIntervalMs);
                 _cityActivity = new CityActivitySystem(_config);
                 _cityEvents = new CityEventManager(_config);
-                _traffic = new TrafficManager(_config);
                 _settingsMenu = new CitySettingsMenu(_config, SaveConfig);
                 _initialized = true;
 
@@ -181,11 +170,9 @@ namespace LivingLosSantos
             {
                 if (_cityEvents != null)
                     _cityEvents.StopAll();
-                if (_traffic != null)
-                    _traffic.StopAll();
                 if (_settingsMenu != null)
                     _settingsMenu.Visible = false;
-                ModLog.Info("Living Los Santos stopped; active event and traffic entities cleaned up.");
+                ModLog.Info("Living Los Santos stopped; active city events cleaned up.");
             }
             catch (Exception ex)
             {

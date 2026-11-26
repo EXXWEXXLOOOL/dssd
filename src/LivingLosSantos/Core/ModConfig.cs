@@ -32,15 +32,11 @@ namespace LivingLosSantos.Core
         public int EventChancePercent = 75;
         public bool RoadsideBreakdownEnabled = true;
 
-        // Additional NPC-driven traffic. The stock traffic natives are capped at 1.0,
-        // so these vehicles provide the actual increase beyond normal ambient traffic.
+        // Scales the population authored by GTA's popcycle/popgroups data.
+        // 1.0 means leave the installed game population at its full configured level.
+        // The native multiplier cannot raise the game above its population-data limits.
         public bool TrafficEnabled = true;
-        public int MaxAdditionalTrafficVehicles = 4;
-        public int TrafficSpawnIntervalSeconds = 12;
-        public int TrafficSpawnMinDistanceMeters = 140;
-        public int TrafficSpawnMaxDistanceMeters = 230;
-        public int TrafficDespawnDistanceMeters = 420;
-        public float VanillaTrafficDensity = 1.0f;
+        public float TrafficDensityMultiplier = 1.0f;
         public float ParkedVehicleDensity = 1.0f;
 
         public static ModConfig Load(string path)
@@ -108,11 +104,6 @@ namespace LivingLosSantos.Core
                 else if (section == "CityEvents" && key == "RuralSearchAttempts") RuralSearchAttempts = integer;
                 else if (section == "CityEvents" && key == "RuralSpawnPreferencePercent") RuralSpawnPreferencePercent = integer;
                 else if (section == "CityEvents" && key == "RoadsideHikerChancePercent") RoadsideHikerChancePercent = integer;
-                else if (section == "Traffic" && key == "MaxAdditionalVehicles") MaxAdditionalTrafficVehicles = integer;
-                else if (section == "Traffic" && key == "SpawnIntervalSeconds") TrafficSpawnIntervalSeconds = integer;
-                else if (section == "Traffic" && key == "SpawnMinDistanceMeters") TrafficSpawnMinDistanceMeters = integer;
-                else if (section == "Traffic" && key == "SpawnMaxDistanceMeters") TrafficSpawnMaxDistanceMeters = integer;
-                else if (section == "Traffic" && key == "DespawnDistanceMeters") TrafficDespawnDistanceMeters = integer;
                 return;
             }
 
@@ -126,7 +117,7 @@ namespace LivingLosSantos.Core
                 else if (section == "LivingCity" && key == "NightTrafficMultiplier") NightTrafficMultiplier = number;
                 else if (section == "LivingCity" && key == "DayActivityMultiplier") DayActivityMultiplier = number;
                 else if (section == "LivingCity" && key == "NightActivityMultiplier") NightActivityMultiplier = number;
-                else if (section == "Traffic" && key == "VanillaDensity") VanillaTrafficDensity = number;
+                else if (section == "Traffic" && (key == "DensityMultiplier" || key == "VanillaDensity")) TrafficDensityMultiplier = number;
                 else if (section == "Traffic" && key == "ParkedDensity") ParkedVehicleDensity = number;
             }
         }
@@ -148,14 +139,7 @@ namespace LivingLosSantos.Core
             EveningStart = Math.Max(0, Math.Min(23, EveningStart));
             NightStart = Math.Max(0, Math.Min(23, NightStart));
 
-            MaxAdditionalTrafficVehicles = Math.Max(0, Math.Min(10, MaxAdditionalTrafficVehicles));
-            TrafficSpawnIntervalSeconds = Math.Max(5, Math.Min(60, TrafficSpawnIntervalSeconds));
-            TrafficSpawnMinDistanceMeters = Math.Max(80, Math.Min(350, TrafficSpawnMinDistanceMeters));
-            TrafficSpawnMaxDistanceMeters = Math.Max(TrafficSpawnMinDistanceMeters + 25,
-                Math.Min(500, TrafficSpawnMaxDistanceMeters));
-            TrafficDespawnDistanceMeters = Math.Max(TrafficSpawnMaxDistanceMeters + 50,
-                Math.Min(900, TrafficDespawnDistanceMeters));
-            VanillaTrafficDensity = Math.Max(0f, Math.Min(1f, VanillaTrafficDensity));
+            TrafficDensityMultiplier = Math.Max(0f, Math.Min(1f, TrafficDensityMultiplier));
             ParkedVehicleDensity = Math.Max(0f, Math.Min(1f, ParkedVehicleDensity));
         }
 
@@ -198,12 +182,7 @@ namespace LivingLosSantos.Core
                 "RuralSpawnPreferencePercent=" + RuralSpawnPreferencePercent.ToString(CultureInfo.InvariantCulture) + "\n\n" +
                 "[Traffic]\n" +
                 "Enabled=" + TrafficEnabled.ToString().ToLowerInvariant() + "\n" +
-                "MaxAdditionalVehicles=" + MaxAdditionalTrafficVehicles.ToString(CultureInfo.InvariantCulture) + "\n" +
-                "SpawnIntervalSeconds=" + TrafficSpawnIntervalSeconds.ToString(CultureInfo.InvariantCulture) + "\n" +
-                "SpawnMinDistanceMeters=" + TrafficSpawnMinDistanceMeters.ToString(CultureInfo.InvariantCulture) + "\n" +
-                "SpawnMaxDistanceMeters=" + TrafficSpawnMaxDistanceMeters.ToString(CultureInfo.InvariantCulture) + "\n" +
-                "DespawnDistanceMeters=" + TrafficDespawnDistanceMeters.ToString(CultureInfo.InvariantCulture) + "\n" +
-                "VanillaDensity=" + VanillaTrafficDensity.ToString("0.##", CultureInfo.InvariantCulture) + "\n" +
+                "DensityMultiplier=" + TrafficDensityMultiplier.ToString("0.##", CultureInfo.InvariantCulture) + "\n" +
                 "ParkedDensity=" + ParkedVehicleDensity.ToString("0.##", CultureInfo.InvariantCulture) + "\n";
 
             File.WriteAllText(path, text);
