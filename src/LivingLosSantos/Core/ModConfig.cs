@@ -173,7 +173,7 @@ namespace LivingLosSantos.Core
             ScenarioPedDensityMultiplier = Math.Max(0f, Math.Min(1f, ScenarioPedDensityMultiplier));
 
             MaxAdditionalTrafficVehicles = Math.Max(0, Math.Min(10, MaxAdditionalTrafficVehicles));
-            TrafficSpawnIntervalSeconds = Math.Max(5, Math.Min(90, TrafficSpawnIntervalSeconds));
+            TrafficSpawnIntervalSeconds = Math.Max(5, Math.Min(60, TrafficSpawnIntervalSeconds));
             TrafficSpawnChancePercent = Math.Max(0, Math.Min(100, TrafficSpawnChancePercent));
             TrafficSpawnMinDistanceMeters = Math.Max(70, Math.Min(250, TrafficSpawnMinDistanceMeters));
             TrafficSpawnMaxDistanceMeters = Math.Max(TrafficSpawnMinDistanceMeters + 20,

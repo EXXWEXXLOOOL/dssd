@@ -543,21 +543,27 @@ namespace LivingLosSantos.Systems
                     continue;
                 }
 
-                if (Function.Call<bool>(Hash.IS_ENTITY_IN_WATER, item.Vehicle.Handle))
+                bool offScreen = !item.Vehicle.IsOnScreen;
+                bool inWater = Function.Call<bool>(Hash.IS_ENTITY_IN_WATER, item.Vehicle.Handle);
+                if (inWater)
                 {
-                    RemoveAt(i, false);
+                    if (offScreen)
+                        RemoveAt(i, false);
                     continue;
                 }
 
-                if (item.Driver == null || !item.Driver.Exists() ||
-                    !Function.Call<bool>(Hash.IS_PED_IN_VEHICLE, item.Driver.Handle, item.Vehicle.Handle, false))
+                bool hasDriver = item.Driver != null && item.Driver.Exists() &&
+                    Function.Call<bool>(Hash.IS_PED_IN_VEHICLE, item.Driver.Handle, item.Vehicle.Handle, false);
+                if (!hasDriver)
                 {
-                    RemoveAt(i, false);
+                    // A driver can leave after a crash or a scripted world event.
+                    // Keep the car alive while visible; retire it only after it leaves view.
+                    if (offScreen)
+                        RemoveAt(i, false);
                     continue;
                 }
 
                 float distance = item.Vehicle.Position.DistanceTo(player.Position);
-                bool offScreen = !item.Vehicle.IsOnScreen;
                 bool tooFar = distance > _config.TrafficDespawnDistanceMeters;
 
                 if (tooFar && offScreen)
