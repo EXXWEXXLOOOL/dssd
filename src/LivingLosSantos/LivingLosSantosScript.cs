@@ -16,6 +16,22 @@ namespace LivingLosSantos
 
         public LivingLosSantosScript()
         {
+            // Create the log as soon as SHVDN constructs this script.
+            // This distinguishes script loading from the first Tick callback.
+            try
+            {
+                string assemblyDirectory = Path.GetDirectoryName(typeof(LivingLosSantosScript).Assembly.Location);
+                if (string.IsNullOrEmpty(assemblyDirectory))
+                    assemblyDirectory = AppDomain.CurrentDomain.BaseDirectory;
+
+                ModLog.Initialize(assemblyDirectory);
+                ModLog.Info("Script instance constructed; waiting for first game tick.");
+            }
+            catch
+            {
+                // Diagnostics must never prevent SHVDN from loading the script.
+            }
+
             Tick += OnTick;
             Aborted += OnAborted;
             Interval = 100;
@@ -24,7 +40,10 @@ namespace LivingLosSantos
         private void OnTick(object sender, EventArgs e)
         {
             if (!_initialized)
+            {
+                ModLog.Info("First game tick received; initializing mod.");
                 Initialize();
+            }
 
             if (!_initialized || !_config.Enabled || !_scheduler.IsDue(DateTime.Now))
                 return;
@@ -51,7 +70,6 @@ namespace LivingLosSantos
                 if (string.IsNullOrEmpty(assemblyDirectory))
                     assemblyDirectory = AppDomain.CurrentDomain.BaseDirectory;
 
-                ModLog.Initialize(assemblyDirectory);
                 _config = ModConfig.Load(Path.Combine(assemblyDirectory, "config.ini"));
                 _scheduler = new UpdateScheduler(_config.UpdateIntervalMs);
                 _cityActivity = new CityActivitySystem(_config);
