@@ -63,7 +63,7 @@ namespace LivingLosSantos
                 if (!_config.Enabled)
                 {
                     if (_trafficManager != null)
-                        _trafficManager.StopAll();
+                        _trafficManager.Update(DateTime.Now);
                     return;
                 }
 
@@ -77,10 +77,7 @@ namespace LivingLosSantos
                 if (_config.LivingCityEnabled)
                     _cityActivity.Update();
 
-                if (_config.AdditionalTrafficEnabled)
-                    _trafficManager.Update(now);
-                else
-                    _trafficManager.StopAll();
+                _trafficManager.Update(now);
 
                 if (_config.CityEventsEnabled)
                     _cityEvents.Update(now);

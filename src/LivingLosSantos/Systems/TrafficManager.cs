@@ -83,16 +83,11 @@ namespace LivingLosSantos.Systems
 
             Cleanup(player, now);
 
-            if (!_config.AdditionalTrafficEnabled || _config.MaxAdditionalTrafficVehicles <= 0 ||
-                IsUnsafeGameState())
-            {
-                if (!_config.AdditionalTrafficEnabled)
-                    StopAll();
+            if (!_config.Enabled || !_config.AdditionalTrafficEnabled ||
+                _config.MaxAdditionalTrafficVehicles <= 0 || IsUnsafeGameState())
                 return;
-            }
 
-            while (_active.Count > _config.MaxAdditionalTrafficVehicles)
-                RemoveAt(_active.Count - 1, true);
+            RetireExcessVehicles(GetEffectiveMaxVehicles(player, now));
 
             if (_active.Count >= GetEffectiveMaxVehicles(player, now))
                 return;
@@ -165,9 +160,18 @@ namespace LivingLosSantos.Systems
 
             for (int attempt = 0; attempt < _modelNames.Length; attempt++)
             {
-                string name = _modelNames[_random.Next(_modelNames.Length)];
-                if (_unavailableModels.Contains(name))
-                    continue;
+                string[] available = _modelNames
+                    .Where(x => !_unavailableModels.Contains(x) &&
+                        !_recentModels.Contains(x, StringComparer.OrdinalIgnoreCase))
+                    .ToArray();
+
+                if (available.Length == 0)
+                    available = _modelNames.Where(x => !_unavailableModels.Contains(x)).ToArray();
+
+                if (available.Length == 0)
+                    break;
+
+                string name = available[_random.Next(available.Length)];
 
                 Model model = new Model(name);
                 if (!model.IsInCdImage || !model.IsValid || !model.IsVehicle)
@@ -306,8 +310,8 @@ namespace LivingLosSantos.Systems
 
             // Sample the surface a few metres along the road and reject steep ramps.
             float radians = heading * (float)Math.PI / 180f;
-            float dx = (float)Math.Cos(radians) * 6f;
-            float dy = (float)Math.Sin(radians) * 6f;
+            float dx = -(float)Math.Sin(radians) * 6f;
+            float dy = (float)Math.Cos(radians) * 6f;
             float aheadZ;
             float behindZ;
 
@@ -408,24 +412,15 @@ namespace LivingLosSantos.Systems
                 if (!vehicle.Exists())
                     return false;
 
-                Function.Call(Hash.SET_VEHICLE_ON_GROUND_PROPERLY, vehicle.Handle);
-                if (!vehicle.IsOnAllWheels ||
-                    Function.Call<bool>(Hash.IS_ENTITY_IN_WATER, vehicle.Handle))
-                {
-                    vehicle.Delete();
-                    return false;
-                }
-
-                // Recheck the position after creation to avoid spawning into an occupied lane.
-                if (Function.Call<bool>(Hash.IS_ANY_VEHICLE_NEAR_POINT,
-                    vehicle.Position.X, vehicle.Position.Y, vehicle.Position.Z, 7f))
+                bool placed = Function.Call<bool>(Hash.SET_VEHICLE_ON_GROUND_PROPERLY, vehicle.Handle);
+                if (!placed || Function.Call<bool>(Hash.IS_ENTITY_IN_WATER, vehicle.Handle))
                 {
                     vehicle.Delete();
                     return false;
                 }
 
                 vehicle.IsPersistent = true;
-                vehicle.NumberPlate = CreateRandomPlate();
+                Function.Call(Hash.SET_VEHICLE_NUMBER_PLATE_TEXT, vehicle.Handle, CreateRandomPlate());
 
                 driver = vehicle.CreateRandomPedOnSeat(VehicleSeat.Driver);
                 if (driver == null || !driver.Exists())
@@ -609,6 +604,24 @@ namespace LivingLosSantos.Systems
                     item.LastRecoveryAt = now;
                     item.LastMovedAt = now;
                     ModLog.Warn("Reissued driving task to a stalled ambient traffic vehicle.");
+                }
+            }
+        }
+
+        private void RetireExcessVehicles(int desiredCount)
+        {
+            int excess = _active.Count - Math.Max(0, desiredCount);
+            if (excess <= 0)
+                return;
+
+            // Never make a visible car pop out. Retire only vehicles already outside the view.
+            for (int i = _active.Count - 1; i >= 0 && excess > 0; i--)
+            {
+                ManagedTrafficVehicle item = _active[i];
+                if (item.Vehicle == null || !item.Vehicle.Exists() || !item.Vehicle.IsOnScreen)
+                {
+                    RemoveAt(i, true);
+                    excess--;
                 }
             }
         }

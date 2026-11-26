@@ -153,6 +153,9 @@ namespace LivingLosSantos.UI
             {
                 if (_updatingControls) return;
                 _config.TrafficSpawnIntervalSeconds = Math.Max(5, _spawnIntervalItem.Value);
+                _updatingControls = true;
+                _spawnIntervalItem.Value = _config.TrafficSpawnIntervalSeconds;
+                _updatingControls = false;
                 SetSliderTitle(_spawnIntervalItem, _config.TrafficSpawnIntervalSeconds + "s");
                 MarkCustomPreset();
                 Save();
@@ -223,7 +226,7 @@ namespace LivingLosSantos.UI
 
         private void NextPreset()
         {
-            _presetIndex = (_presetIndex + 1) % PresetNames.Length;
+            _presetIndex = _presetIndex < 0 ? 0 : (_presetIndex + 1) % PresetNames.Length;
             _updatingControls = true;
 
             if (_presetIndex == 0)
@@ -275,7 +278,7 @@ namespace LivingLosSantos.UI
         private void MarkCustomPreset()
         {
             _presetItem.AltTitle = "CUSTOM";
-            _presetIndex = 1;
+            _presetIndex = -1;
         }
 
         private static void SetSliderTitle(NativeSliderItem item, string title)

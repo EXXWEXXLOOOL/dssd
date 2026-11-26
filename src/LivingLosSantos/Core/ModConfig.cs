@@ -145,6 +145,9 @@ namespace LivingLosSantos.Core
                 else if (section == "Traffic" && key == "PedDensity") PedDensityMultiplier = number;
                 else if (section == "Traffic" && key == "ScenarioPedDensity") ScenarioPedDensityMultiplier = number;
             }
+
+            if (section == "Traffic" && key == "Models")
+                TrafficVehicleModels = value;
         }
 
         private void Clamp()
