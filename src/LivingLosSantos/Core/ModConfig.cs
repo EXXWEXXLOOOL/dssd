@@ -23,8 +23,6 @@ namespace LivingLosSantos.Core
         public int MorningStart = 6;
         public int EveningStart = 19;
         public int NightStart = 23;
-        public float DayTrafficMultiplier = 1.0f;
-        public float NightTrafficMultiplier = 0.75f;
         public float DayActivityMultiplier = 1.0f;
         public float NightActivityMultiplier = 0.65f;
         public bool CityEventsEnabled = true;
@@ -113,8 +111,6 @@ namespace LivingLosSantos.Core
                 else if (section == "Performance" && key == "MaximumEventDistance") MaximumEventDistance = number;
                 else if (section == "Performance" && key == "RoadsideOffsetMinMeters") RoadsideOffsetMinMeters = number;
                 else if (section == "Performance" && key == "RoadsideOffsetMaxMeters") RoadsideOffsetMaxMeters = number;
-                else if (section == "LivingCity" && key == "DayTrafficMultiplier") DayTrafficMultiplier = number;
-                else if (section == "LivingCity" && key == "NightTrafficMultiplier") NightTrafficMultiplier = number;
                 else if (section == "LivingCity" && key == "DayActivityMultiplier") DayActivityMultiplier = number;
                 else if (section == "LivingCity" && key == "NightActivityMultiplier") NightActivityMultiplier = number;
                 else if (section == "Traffic" && (key == "DensityMultiplier" || key == "VanillaDensity")) TrafficDensityMultiplier = number;
@@ -167,8 +163,6 @@ namespace LivingLosSantos.Core
                 "MorningStart=" + MorningStart.ToString(CultureInfo.InvariantCulture) + "\n" +
                 "EveningStart=" + EveningStart.ToString(CultureInfo.InvariantCulture) + "\n" +
                 "NightStart=" + NightStart.ToString(CultureInfo.InvariantCulture) + "\n" +
-                "DayTrafficMultiplier=" + DayTrafficMultiplier.ToString("0.##", CultureInfo.InvariantCulture) + "\n" +
-                "NightTrafficMultiplier=" + NightTrafficMultiplier.ToString("0.##", CultureInfo.InvariantCulture) + "\n" +
                 "DayActivityMultiplier=" + DayActivityMultiplier.ToString("0.##", CultureInfo.InvariantCulture) + "\n" +
                 "NightActivityMultiplier=" + NightActivityMultiplier.ToString("0.##", CultureInfo.InvariantCulture) + "\n\n" +
                 "[CityEvents]\n" +

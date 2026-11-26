@@ -15,7 +15,7 @@ namespace LivingLosSantos.UI
         private readonly NativeSliderItem _movingTrafficItem;
         private readonly NativeSliderItem _parkedTrafficItem;
         private bool _updatingControls;
-        private int _presetIndex = 1;
+        private int _presetIndex = 2;
 
         private static readonly string[] PresetNames = { "LOW", "REALISTIC", "BUSY" };
 
@@ -96,7 +96,8 @@ namespace LivingLosSantos.UI
             _menu.Add(_parkedTrafficItem);
 
             _presetItem = new NativeItem("Traffic preset", "Choose Low, Realistic or Busy. Presets only scale the game's own traffic.");
-            _presetItem.AltTitle = PresetNames[_presetIndex];
+            DetectPreset();
+            _presetItem.AltTitle = _presetIndex < 0 ? "CUSTOM" : PresetNames[_presetIndex];
             _presetItem.Activated += delegate { NextPreset(); };
             _menu.Add(_presetItem);
 
@@ -116,6 +117,21 @@ namespace LivingLosSantos.UI
         public void Process()
         {
             _pool.Process();
+        }
+
+        private void DetectPreset()
+        {
+            if (Math.Abs(_config.TrafficDensityMultiplier - 0.60f) < 0.01f &&
+                Math.Abs(_config.ParkedVehicleDensity - 0.60f) < 0.01f)
+                _presetIndex = 0;
+            else if (Math.Abs(_config.TrafficDensityMultiplier - 0.85f) < 0.01f &&
+                Math.Abs(_config.ParkedVehicleDensity - 0.80f) < 0.01f)
+                _presetIndex = 1;
+            else if (Math.Abs(_config.TrafficDensityMultiplier - 1.0f) < 0.01f &&
+                Math.Abs(_config.ParkedVehicleDensity - 1.0f) < 0.01f)
+                _presetIndex = 2;
+            else
+                _presetIndex = -1;
         }
 
         private void NextPreset()

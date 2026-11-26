@@ -16,7 +16,6 @@ namespace LivingLosSantos.Systems
         private readonly ModConfig _config;
 
         public CityPeriod CurrentPeriod { get; private set; }
-        public float TrafficMultiplier { get; private set; }
         public float ActivityMultiplier { get; private set; }
 
         public CityActivitySystem(ModConfig config)
@@ -38,7 +37,6 @@ namespace LivingLosSantos.Systems
                 CurrentPeriod = CityPeriod.Evening;
 
             bool night = CurrentPeriod == CityPeriod.Night;
-            TrafficMultiplier = night ? _config.NightTrafficMultiplier : _config.DayTrafficMultiplier;
             ActivityMultiplier = night ? _config.NightActivityMultiplier : _config.DayActivityMultiplier;
         }
     }
