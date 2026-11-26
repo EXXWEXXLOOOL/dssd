@@ -1,11 +1,13 @@
 using System;
 using GTA;
 using GTA.Math;
+using GTA.Native;
 using LivingLosSantos.Core;
+using LivingLosSantos.Systems;
 
 namespace LivingLosSantos.Systems.Events
 {
-    internal sealed class RoadsideBreakdownEvent
+    internal sealed class RoadsideBreakdownEvent : ICityEvent
     {
         private readonly Vector3 _position;
         private readonly float _heading;
@@ -41,12 +43,21 @@ namespace LivingLosSantos.Systems.Events
                 if (_vehicle == null || !_vehicle.Exists())
                     return false;
 
+                if (Function.Call<bool>(Hash.IS_POINT_ON_ROAD,
+                    _vehicle.Position.X, _vehicle.Position.Y, _vehicle.Position.Z, 0))
+                {
+                    ModLog.Warn("Rejected breakdown spawn because the created vehicle is still on the road: " + _vehicleModel);
+                    Cleanup();
+                    return false;
+                }
+
+                Function.Call<bool>(Hash.SET_VEHICLE_ON_GROUND_PROPERLY, _vehicle.Handle);
                 _vehicle.IsPersistent = true;
                 _vehicle.EngineHealth = 35f;
                 _vehicle.IsDriveable = false;
                 _expiresAt = DateTime.Now.AddMinutes(4);
 
-                ModLog.Info(string.Format("Spawned broken-down {0} at {1}.", _vehicleModel, _zoneName));
+                ModLog.Info(string.Format("Spawned broken-down {0} on the shoulder in {1}.", _vehicleModel, _zoneName));
                 return true;
             }
             catch (Exception ex)

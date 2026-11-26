@@ -11,12 +11,14 @@ namespace LivingLosSantos.Core
         public bool ShowNotifications = true;
         public int UpdateIntervalMs = 1000;
         public float MinimumEventDistance = 150f;
-        public float MaximumEventDistance = 360f;
+        public float MaximumEventDistance = 300f;
         public int MaxActiveEvents = 3;
-        public float RoadsideOffsetMinMeters = 5.5f;
-        public float RoadsideOffsetMaxMeters = 8.5f;
+        public float RoadsideOffsetMinMeters = 2.0f;
+        public float RoadsideOffsetMaxMeters = 6.0f;
         public int RuralSearchAttempts = 18;
         public int RuralSpawnPreferencePercent = 90;
+        public int RoadsideHikerChancePercent = 20;
+        public bool RoadsideHikerEnabled = true;
         public bool LivingCityEnabled = true;
         public int MorningStart = 6;
         public int EveningStart = 19;
@@ -78,6 +80,7 @@ namespace LivingLosSantos.Core
                 else if (section == "LivingCity" && key == "Enabled") LivingCityEnabled = boolean;
                 else if (section == "CityEvents" && key == "Enabled") CityEventsEnabled = boolean;
                 else if (section == "CityEvents" && key == "RoadsideBreakdownEnabled") RoadsideBreakdownEnabled = boolean;
+                else if (section == "CityEvents" && key == "RoadsideHikerEnabled") RoadsideHikerEnabled = boolean;
                 return;
             }
 
@@ -92,6 +95,7 @@ namespace LivingLosSantos.Core
                 else if (section == "CityEvents" && key == "EventChancePercent") EventChancePercent = integer;
                 else if (section == "CityEvents" && key == "RuralSearchAttempts") RuralSearchAttempts = integer;
                 else if (section == "CityEvents" && key == "RuralSpawnPreferencePercent") RuralSpawnPreferencePercent = integer;
+                else if (section == "CityEvents" && key == "RoadsideHikerChancePercent") RoadsideHikerChancePercent = integer;
                 return;
             }
 
@@ -112,12 +116,13 @@ namespace LivingLosSantos.Core
         {
             UpdateIntervalMs = Math.Max(250, Math.Min(10000, UpdateIntervalMs));
             MinimumEventDistance = Math.Max(50f, Math.Min(1000f, MinimumEventDistance));
-            MaximumEventDistance = Math.Max(MinimumEventDistance + 20f, Math.Min(1200f, MaximumEventDistance));
-            RoadsideOffsetMinMeters = Math.Max(2f, Math.Min(12f, RoadsideOffsetMinMeters));
-            RoadsideOffsetMaxMeters = Math.Max(RoadsideOffsetMinMeters + 0.5f, Math.Min(16f, RoadsideOffsetMaxMeters));
+            MaximumEventDistance = Math.Max(MinimumEventDistance + 20f, Math.Min(1000f, MaximumEventDistance));
+            RoadsideOffsetMinMeters = Math.Max(1f, Math.Min(8f, RoadsideOffsetMinMeters));
+            RoadsideOffsetMaxMeters = Math.Max(RoadsideOffsetMinMeters + 0.5f, Math.Min(12f, RoadsideOffsetMaxMeters));
             MaxActiveEvents = Math.Max(0, Math.Min(10, MaxActiveEvents));
             RuralSearchAttempts = Math.Max(4, Math.Min(40, RuralSearchAttempts));
             RuralSpawnPreferencePercent = Math.Max(0, Math.Min(100, RuralSpawnPreferencePercent));
+            RoadsideHikerChancePercent = Math.Max(0, Math.Min(100, RoadsideHikerChancePercent));
             EventCheckIntervalSeconds = Math.Max(10, Math.Min(600, EventCheckIntervalSeconds));
             EventChancePercent = Math.Max(0, Math.Min(100, EventChancePercent));
             MorningStart = Math.Max(0, Math.Min(23, MorningStart));
@@ -133,9 +138,9 @@ namespace LivingLosSantos.Core
 
             File.WriteAllText(path,
                 "[General]\nEnabled=true\nDebugMode=false\nShowNotifications=true\n\n" +
-                "[Performance]\nUpdateIntervalMs=1000\nMinimumEventDistance=150\nMaximumEventDistance=360\nMaxActiveEvents=3\nRoadsideOffsetMinMeters=5.5\nRoadsideOffsetMaxMeters=8.5\n\n" +
+                "[Performance]\nUpdateIntervalMs=1000\nMinimumEventDistance=150\nMaximumEventDistance=300\nMaxActiveEvents=3\nRoadsideOffsetMinMeters=2.0\nRoadsideOffsetMaxMeters=6.0\n\n" +
                 "[LivingCity]\nEnabled=true\nMorningStart=6\nEveningStart=19\nNightStart=23\nDayTrafficMultiplier=1.0\nNightTrafficMultiplier=0.75\nDayActivityMultiplier=1.0\nNightActivityMultiplier=0.65\n\n" +
-                "[CityEvents]\nEnabled=true\nEventCheckIntervalSeconds=30\nEventChancePercent=75\nRoadsideBreakdownEnabled=true\nRuralSearchAttempts=18\nRuralSpawnPreferencePercent=90\n");
+                "[CityEvents]\nEnabled=true\nEventCheckIntervalSeconds=30\nEventChancePercent=75\nRoadsideBreakdownEnabled=true\nRoadsideHikerEnabled=true\nRoadsideHikerChancePercent=20\nRuralSearchAttempts=18\nRuralSpawnPreferencePercent=90\n");
         }
     }
 }

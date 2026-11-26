@@ -34,9 +34,11 @@
     <Compile Include="Core\ModConfig.cs" />
     <Compile Include="Core\ModLog.cs" />
     <Compile Include="Core\UpdateScheduler.cs" />
+    <Compile Include="Systems\ICityEvent.cs" />
     <Compile Include="Systems\CityActivitySystem.cs" />
     <Compile Include="Systems\CityEventManager.cs" />
     <Compile Include="Systems\Events\RoadsideBreakdownEvent.cs" />
+    <Compile Include="Systems\Events\RoadsideHikerEvent.cs" />
     <Compile Include="LivingLosSantosScript.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
