@@ -205,20 +205,29 @@ namespace LivingLosSantos.UI
 
         private void DetectPreset()
         {
-            if (_config.MaxAdditionalTrafficVehicles == 2 &&
+            if (_config.AdditionalTrafficEnabled &&
+                _config.MaxAdditionalTrafficVehicles == 2 &&
                 _config.TrafficSpawnIntervalSeconds == 28 &&
                 _config.TrafficSpawnChancePercent == 35 &&
-                Math.Abs(_config.TrafficDensityMultiplier - 0.60f) < 0.01f)
+                Math.Abs(_config.TrafficDensityMultiplier - 0.60f) < 0.01f &&
+                Math.Abs(_config.ParkedVehicleDensity - 0.60f) < 0.01f &&
+                Math.Abs(_config.PedDensityMultiplier - 0.65f) < 0.01f)
                 _presetIndex = 0;
-            else if (_config.MaxAdditionalTrafficVehicles == 4 &&
+            else if (_config.AdditionalTrafficEnabled &&
+                _config.MaxAdditionalTrafficVehicles == 4 &&
                 _config.TrafficSpawnIntervalSeconds == 14 &&
                 _config.TrafficSpawnChancePercent == 65 &&
-                Math.Abs(_config.TrafficDensityMultiplier - 0.85f) < 0.01f)
+                Math.Abs(_config.TrafficDensityMultiplier - 0.85f) < 0.01f &&
+                Math.Abs(_config.ParkedVehicleDensity - 0.80f) < 0.01f &&
+                Math.Abs(_config.PedDensityMultiplier - 0.85f) < 0.01f)
                 _presetIndex = 1;
-            else if (_config.MaxAdditionalTrafficVehicles == 7 &&
+            else if (_config.AdditionalTrafficEnabled &&
+                _config.MaxAdditionalTrafficVehicles == 7 &&
                 _config.TrafficSpawnIntervalSeconds == 8 &&
                 _config.TrafficSpawnChancePercent == 80 &&
-                Math.Abs(_config.TrafficDensityMultiplier - 1.0f) < 0.01f)
+                Math.Abs(_config.TrafficDensityMultiplier - 1.0f) < 0.01f &&
+                Math.Abs(_config.ParkedVehicleDensity - 1.0f) < 0.01f &&
+                Math.Abs(_config.PedDensityMultiplier - 1.0f) < 0.01f)
                 _presetIndex = 2;
             else
                 _presetIndex = -1;
@@ -234,6 +243,7 @@ namespace LivingLosSantos.UI
                 _config.TrafficDensityMultiplier = 0.60f;
                 _config.ParkedVehicleDensity = 0.60f;
                 _config.PedDensityMultiplier = 0.65f;
+                _config.ScenarioPedDensityMultiplier = 0.65f;
                 _config.MaxAdditionalTrafficVehicles = 2;
                 _config.TrafficSpawnIntervalSeconds = 28;
                 _config.TrafficSpawnChancePercent = 35;
@@ -243,6 +253,7 @@ namespace LivingLosSantos.UI
                 _config.TrafficDensityMultiplier = 0.85f;
                 _config.ParkedVehicleDensity = 0.80f;
                 _config.PedDensityMultiplier = 0.85f;
+                _config.ScenarioPedDensityMultiplier = 0.85f;
                 _config.MaxAdditionalTrafficVehicles = 4;
                 _config.TrafficSpawnIntervalSeconds = 14;
                 _config.TrafficSpawnChancePercent = 65;
@@ -252,6 +263,7 @@ namespace LivingLosSantos.UI
                 _config.TrafficDensityMultiplier = 1.0f;
                 _config.ParkedVehicleDensity = 1.0f;
                 _config.PedDensityMultiplier = 1.0f;
+                _config.ScenarioPedDensityMultiplier = 1.0f;
                 _config.MaxAdditionalTrafficVehicles = 7;
                 _config.TrafficSpawnIntervalSeconds = 8;
                 _config.TrafficSpawnChancePercent = 80;

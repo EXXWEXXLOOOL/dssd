@@ -1,6 +1,6 @@
 # Living Los Santos
 
-A ScriptHookVDotNet 3 mod for **GTA V Legacy (single-player)**. It provides an in-game settings menu and random roadside events. Ambient traffic is managed by GTA's own population system, not by manually spawning replacement cars.
+A ScriptHookVDotNet 3 mod for **GTA V Legacy (single-player)**. It provides an in-game settings menu, frame-based population controls, bounded additional NPC-driven traffic, and random roadside events.
 
 ## Current features
 

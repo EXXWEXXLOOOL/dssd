@@ -34,10 +34,10 @@ namespace LivingLosSantos.Core
         // 1.0 means leave the installed game population at its full configured level.
         // The native multiplier cannot raise the game above its population-data limits.
         public bool TrafficEnabled = true;
-        public float TrafficDensityMultiplier = 1.0f;
-        public float ParkedVehicleDensity = 1.0f;
-        public float PedDensityMultiplier = 1.0f;
-        public float ScenarioPedDensityMultiplier = 1.0f;
+        public float TrafficDensityMultiplier = 0.85f;
+        public float ParkedVehicleDensity = 0.80f;
+        public float PedDensityMultiplier = 0.85f;
+        public float ScenarioPedDensityMultiplier = 0.85f;
 
         // Extra scripted traffic is additive: it creates a small, bounded number
         // of vehicles ahead of the player, outside the camera view.

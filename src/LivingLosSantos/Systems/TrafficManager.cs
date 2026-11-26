@@ -85,7 +85,10 @@ namespace LivingLosSantos.Systems
 
             if (!_config.Enabled || !_config.AdditionalTrafficEnabled ||
                 _config.MaxAdditionalTrafficVehicles <= 0 || IsUnsafeGameState())
+            {
+                ReleasePreloadedModel();
                 return;
+            }
 
             RetireExcessVehicles(GetEffectiveMaxVehicles(player, now));
 
@@ -488,11 +491,6 @@ namespace LivingLosSantos.Systems
             int hour = Function.Call<int>(Hash.GET_CLOCK_HOURS);
             if (rural)
                 max = Math.Max(1, max - 2);
-
-            // A modest rush-hour bonus; keep the hard configured limit as the ceiling.
-            bool rushHour = (hour >= 6 && hour <= 9) || (hour >= 16 && hour <= 19);
-            if (rushHour && !rural)
-                max = Math.Min(_config.MaxAdditionalTrafficVehicles, max + 1);
 
             return Math.Max(0, max);
         }

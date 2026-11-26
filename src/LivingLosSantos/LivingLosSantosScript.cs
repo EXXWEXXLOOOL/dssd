@@ -60,17 +60,17 @@ namespace LivingLosSantos
                 if (_settingsMenu != null)
                     _settingsMenu.Process();
 
+                DateTime now = DateTime.Now;
                 if (!_config.Enabled)
                 {
-                    if (_trafficManager != null)
-                        _trafficManager.Update(DateTime.Now);
+                    if (_scheduler.IsDue(now) && _trafficManager != null)
+                        _trafficManager.Update(now);
                     return;
                 }
 
                 // GTA frame-based density controls must be applied on every frame.
                 TrafficDensityController.ApplyFrame(_config);
 
-                DateTime now = DateTime.Now;
                 if (!_scheduler.IsDue(now))
                     return;
 
