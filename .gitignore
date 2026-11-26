@@ -1,0 +1,14 @@
+# Build output
+**/bin/
+**/obj/
+*.dll
+*.pdb
+*.cache
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# Local game installation overrides
+*.local.props
