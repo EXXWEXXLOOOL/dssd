@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using GTA;
+using GTA.Math;
 using LivingLosSantos.Core;
 using LivingLosSantos.Systems.Events;
 
