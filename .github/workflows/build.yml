@@ -21,19 +21,19 @@ jobs:
       - name: Install MSBuild
         uses: microsoft/setup-msbuild@v2
 
-      - name: Download ScriptHookVDotNet 3 API
+      - name: Download ScriptHookVDotNet 3.6.0 API
         shell: pwsh
         run: |
-          $archive = Join-Path $env:RUNNER_TEMP 'shvdn.zip'
-          $install = Join-Path $env:RUNNER_TEMP 'shvdn'
-          $downloadUrl = 'https://github.com/scripthookvdotnet/scripthookvdotnet-nightly/releases/download/v3.7.0-nightly.206/ScriptHookVDotNet-v3.7.0-nightly.206.zip'
-          $expectedSha256 = 'a5fb7dcb7e981eeec2a9885cfdb02ef6fb7a09b64e9dd59ec23fe746499b922a'
-          Invoke-WebRequest -Uri $downloadUrl -OutFile $archive
-          $actualSha256 = (Get-FileHash -Path $archive -Algorithm SHA256).Hash.ToLowerInvariant()
-          if ($actualSha256 -ne $expectedSha256) { throw "ScriptHookVDotNet archive SHA256 mismatch: $actualSha256" }
+          $archive = Join-Path $env:RUNNER_TEMP 'shvdn-3.6.0.zip'
+          $install = Join-Path $env:RUNNER_TEMP 'shvdn-3.6.0'
+          $downloadUrl = 'https://github.com/scripthookvdotnet/scripthookvdotnet/releases/download/v3.6.0/ScriptHookVDotNet.zip'
+          Invoke-WebRequest -Uri $downloadUrl -OutFile $archive -Headers @{ 'User-Agent' = 'LivingLosSantos-CI' }
           Expand-Archive -Path $archive -DestinationPath $install -Force
           $api = Get-ChildItem -Path $install -Recurse -Filter 'ScriptHookVDotNet3.dll' | Select-Object -First 1
-          if (-not $api) { throw 'ScriptHookVDotNet3.dll was not found in the downloaded archive.' }
+          if (-not $api) { throw 'ScriptHookVDotNet3.dll was not found in the official v3.6.0 archive.' }
+          $apiVersion = [System.Reflection.AssemblyName]::GetAssemblyName($api.FullName).Version
+          if ($apiVersion -ne [version]'3.6.0.0') { throw "Expected ScriptHookVDotNet3 API 3.6.0.0, found $apiVersion." }
+          Write-Host "Using ScriptHookVDotNet3 API $apiVersion from $($api.FullName)"
           $refs = Join-Path $env:RUNNER_TEMP 'gta-refs'
           New-Item -ItemType Directory -Force -Path (Join-Path $refs 'scripts') | Out-Null
           Copy-Item $api.FullName (Join-Path $refs 'scripts\ScriptHookVDotNet3.dll')
@@ -54,7 +54,7 @@ jobs:
       - name: Upload compiled mod
         uses: actions/upload-artifact@v4
         with:
-          name: LivingLosSantos
+          name: LivingLosSantos-SHVDN-3.6.0
           path: LivingLosSantos.zip
           if-no-files-found: error
           retention-days: 30
