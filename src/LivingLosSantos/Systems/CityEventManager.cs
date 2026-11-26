@@ -207,19 +207,20 @@ namespace LivingLosSantos.Systems
 
         private static bool TryGetVehicleNode(Vector3 candidate, int nodeType, out Vector3 nodePosition, out float heading)
         {
-            OutputArgument outPosition = new OutputArgument();
-            OutputArgument outHeading = new OutputArgument();
-
-            bool found = Function.Call<bool>(
-                Hash.GET_CLOSEST_VEHICLE_NODE_WITH_HEADING,
-                candidate.X, candidate.Y, candidate.Z,
-                outPosition, outHeading, nodeType, 3f, 0);
-
-            if (found)
+            using (OutputArgument outPosition = new OutputArgument())
+            using (OutputArgument outHeading = new OutputArgument())
             {
-                nodePosition = outPosition.GetResult<Vector3>();
-                heading = outHeading.GetResult<float>();
-                return true;
+                bool found = Function.Call<bool>(
+                    Hash.GET_CLOSEST_VEHICLE_NODE_WITH_HEADING,
+                    candidate.X, candidate.Y, candidate.Z,
+                    outPosition, outHeading, nodeType, 3f, 0);
+
+                if (found)
+                {
+                    nodePosition = outPosition.GetResult<Vector3>();
+                    heading = outHeading.GetResult<float>();
+                    return true;
+                }
             }
 
             nodePosition = Vector3.Zero;
@@ -233,7 +234,9 @@ namespace LivingLosSantos.Systems
             // allowing the full seven-model pool to appear in every region.
             VehicleHash[] ruralPool =
             {
-                VehicleHash.Sadler, VehicleHash.Regina, VehicleHash.Emperor,
+                VehicleHash.Sadler, VehicleHash.Sadler, VehicleHash.Sadler,
+                VehicleHash.Regina, VehicleHash.Regina,
+                VehicleHash.Emperor, VehicleHash.Emperor,
                 VehicleHash.Asea, VehicleHash.Premier, VehicleHash.Stanier,
                 VehicleHash.Blista
             };
