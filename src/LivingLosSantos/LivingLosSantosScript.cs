@@ -17,7 +17,6 @@ namespace LivingLosSantos
 
         public LivingLosSantosScript()
         {
-            // Create the log as soon as SHVDN constructs this script.
             try
             {
                 string assemblyDirectory = Path.GetDirectoryName(typeof(LivingLosSantosScript).Assembly.Location);
@@ -67,19 +66,15 @@ namespace LivingLosSantos
         {
             try
             {
-                string assemblyDirectory = Path.GetDirectoryName(typeof(LivingLosSantosScript).Assembly.Location);
-                if (string.IsNullOrEmpty(assemblyDirectory))
-                    assemblyDirectory = AppDomain.CurrentDomain.BaseDirectory;
+                string configPath = ResolveConfigPath();
+                ModLog.Info("Loading configuration from: " + configPath);
 
-                _config = ModConfig.Load(Path.Combine(assemblyDirectory, "config.ini"));
+                _config = ModConfig.Load(configPath);
                 _scheduler = new UpdateScheduler(_config.UpdateIntervalMs);
                 _cityActivity = new CityActivitySystem(_config);
                 _cityEvents = new CityEventManager(_config);
                 _initialized = true;
 
-                // Screen.ShowSubtitle in the installed SHVDN/GTA combination
-                // throws from SHVDN.NativeMemory. Keep initialization independent
-                // from the optional HUD notification; use the log as confirmation.
                 ModLog.Info("Living Los Santos initialized. On-screen startup notification is disabled for compatibility.");
             }
             catch (Exception ex)
@@ -87,6 +82,42 @@ namespace LivingLosSantos
                 _initialized = false;
                 ModLog.Error("Initialization failed. Script will not retry every frame; restart the game after fixing the reported error.", ex);
             }
+        }
+
+        private static string ResolveConfigPath()
+        {
+            string currentDirectory = Environment.CurrentDirectory;
+            string baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            string assemblyDirectory = Path.GetDirectoryName(typeof(LivingLosSantosScript).Assembly.Location);
+
+            // SHVDN shadow-copies script assemblies into LocalAppData\assembly\dl3.
+            // Prefer the real GTA V scripts folder over the shadow-copy directory.
+            string[] candidates =
+            {
+                Path.Combine(currentDirectory, "scripts", "config.ini"),
+                Path.Combine(baseDirectory, "scripts", "config.ini"),
+                Path.Combine(currentDirectory, "config.ini"),
+                Path.Combine(baseDirectory, "config.ini"),
+                Path.Combine(assemblyDirectory ?? currentDirectory, "config.ini")
+            };
+
+            foreach (string candidate in candidates)
+            {
+                if (File.Exists(candidate))
+                    return candidate;
+            }
+
+            // If no config exists yet, create it in the real scripts folder where
+            // the user expects to edit it, rather than in SHVDN's shadow cache.
+            string scriptsDirectory = Path.Combine(currentDirectory, "scripts");
+            if (Directory.Exists(scriptsDirectory))
+                return Path.Combine(scriptsDirectory, "config.ini");
+
+            scriptsDirectory = Path.Combine(baseDirectory, "scripts");
+            if (Directory.Exists(scriptsDirectory))
+                return Path.Combine(scriptsDirectory, "config.ini");
+
+            return Path.Combine(assemblyDirectory ?? currentDirectory, "config.ini");
         }
 
         private void OnAborted(object sender, EventArgs e)
