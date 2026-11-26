@@ -47,9 +47,12 @@ namespace LivingLosSantos
         {
             try
             {
-                string directory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "LivingLosSantos");
-                ModLog.Initialize(directory);
-                _config = ModConfig.Load(Path.Combine(directory, "config.ini"));
+                string assemblyDirectory = Path.GetDirectoryName(typeof(LivingLosSantosScript).Assembly.Location);
+                if (string.IsNullOrEmpty(assemblyDirectory))
+                    assemblyDirectory = AppDomain.CurrentDomain.BaseDirectory;
+
+                ModLog.Initialize(assemblyDirectory);
+                _config = ModConfig.Load(Path.Combine(assemblyDirectory, "config.ini"));
                 _scheduler = new UpdateScheduler(_config.UpdateIntervalMs);
                 _cityActivity = new CityActivitySystem(_config);
                 _cityEvents = new CityEventManager(_config);
