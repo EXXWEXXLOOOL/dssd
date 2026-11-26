@@ -1,8 +1,10 @@
 using System;
 using System.IO;
+using System.Windows.Forms;
 using GTA;
 using LivingLosSantos.Core;
 using LivingLosSantos.Systems;
+using LivingLosSantos.UI;
 
 namespace LivingLosSantos
 {
@@ -12,6 +14,9 @@ namespace LivingLosSantos
         private UpdateScheduler _scheduler;
         private CityActivitySystem _cityActivity;
         private CityEventManager _cityEvents;
+        private TrafficManager _traffic;
+        private CitySettingsMenu _settingsMenu;
+        private string _configPath;
         private bool _initialized;
         private bool _initializationAttempted;
 
@@ -32,8 +37,10 @@ namespace LivingLosSantos
             }
 
             Tick += OnTick;
+            KeyDown += OnKeyDown;
             Aborted += OnAborted;
-            Interval = 100;
+            // Traffic density natives and LemonUI need one update every rendered frame.
+            Interval = 0;
         }
 
         private void OnTick(object sender, EventArgs e)
@@ -45,16 +52,38 @@ namespace LivingLosSantos
                 Initialize();
             }
 
-            if (!_initialized || !_config.Enabled || !_scheduler.IsDue(DateTime.Now))
+            if (!_initialized)
                 return;
 
             try
             {
+                if (_settingsMenu != null)
+                    _settingsMenu.Process();
+
+                if (!_config.Enabled)
+                {
+                    if (_traffic != null)
+                        _traffic.StopAll();
+                    return;
+                }
+
+                // GTA frame-based density controls must be applied on every frame.
+                TrafficDensityController.ApplyFrame(_config, _cityActivity);
+
+                DateTime now = DateTime.Now;
+                if (!_scheduler.IsDue(now))
+                    return;
+
                 if (_config.LivingCityEnabled)
                     _cityActivity.Update();
 
+                if (_config.TrafficEnabled)
+                    _traffic.Update(now);
+                else
+                    _traffic.StopAll();
+
                 if (_config.CityEventsEnabled)
-                    _cityEvents.Update(DateTime.Now);
+                    _cityEvents.Update(now);
             }
             catch (Exception ex)
             {
@@ -62,25 +91,51 @@ namespace LivingLosSantos
             }
         }
 
+        private void OnKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode != Keys.F10 || !_initialized || _settingsMenu == null)
+                return;
+
+            _settingsMenu.Visible = !_settingsMenu.Visible;
+        }
+
         private void Initialize()
         {
             try
             {
-                string configPath = ResolveConfigPath();
-                ModLog.Info("Loading configuration from: " + configPath);
+                _configPath = ResolveConfigPath();
+                ModLog.Info("Loading configuration from: " + _configPath);
 
-                _config = ModConfig.Load(configPath);
+                _config = ModConfig.Load(_configPath);
                 _scheduler = new UpdateScheduler(_config.UpdateIntervalMs);
                 _cityActivity = new CityActivitySystem(_config);
                 _cityEvents = new CityEventManager(_config);
+                _traffic = new TrafficManager(_config);
+                _settingsMenu = new CitySettingsMenu(_config, SaveConfig);
                 _initialized = true;
 
-                ModLog.Info("Living Los Santos initialized. On-screen startup notification is disabled for compatibility.");
+                ModLog.Info("Living Los Santos initialized. Press F10 to open settings.");
             }
             catch (Exception ex)
             {
                 _initialized = false;
                 ModLog.Error("Initialization failed. Script will not retry every frame; restart the game after fixing the reported error.", ex);
+            }
+        }
+
+        private void SaveConfig()
+        {
+            try
+            {
+                if (!string.IsNullOrEmpty(_configPath) && _config != null)
+                {
+                    _config.Save(_configPath);
+                    ModLog.Info("Settings saved to " + _configPath + ".");
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLog.Error("Could not save config.ini.", ex);
             }
         }
 
@@ -126,7 +181,11 @@ namespace LivingLosSantos
             {
                 if (_cityEvents != null)
                     _cityEvents.StopAll();
-                ModLog.Info("Living Los Santos stopped; active event entities cleaned up.");
+                if (_traffic != null)
+                    _traffic.StopAll();
+                if (_settingsMenu != null)
+                    _settingsMenu.Visible = false;
+                ModLog.Info("Living Los Santos stopped; active event and traffic entities cleaned up.");
             }
             catch (Exception ex)
             {

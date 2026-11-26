@@ -32,6 +32,17 @@ namespace LivingLosSantos.Core
         public int EventChancePercent = 75;
         public bool RoadsideBreakdownEnabled = true;
 
+        // Additional NPC-driven traffic. The stock traffic natives are capped at 1.0,
+        // so these vehicles provide the actual increase beyond normal ambient traffic.
+        public bool TrafficEnabled = true;
+        public int MaxAdditionalTrafficVehicles = 4;
+        public int TrafficSpawnIntervalSeconds = 12;
+        public int TrafficSpawnMinDistanceMeters = 140;
+        public int TrafficSpawnMaxDistanceMeters = 230;
+        public int TrafficDespawnDistanceMeters = 420;
+        public float VanillaTrafficDensity = 1.0f;
+        public float ParkedVehicleDensity = 1.0f;
+
         public static ModConfig Load(string path)
         {
             var config = new ModConfig();
@@ -81,6 +92,7 @@ namespace LivingLosSantos.Core
                 else if (section == "CityEvents" && key == "Enabled") CityEventsEnabled = boolean;
                 else if (section == "CityEvents" && key == "RoadsideBreakdownEnabled") RoadsideBreakdownEnabled = boolean;
                 else if (section == "CityEvents" && key == "RoadsideHikerEnabled") RoadsideHikerEnabled = boolean;
+                else if (section == "Traffic" && key == "Enabled") TrafficEnabled = boolean;
                 return;
             }
 
@@ -96,6 +108,11 @@ namespace LivingLosSantos.Core
                 else if (section == "CityEvents" && key == "RuralSearchAttempts") RuralSearchAttempts = integer;
                 else if (section == "CityEvents" && key == "RuralSpawnPreferencePercent") RuralSpawnPreferencePercent = integer;
                 else if (section == "CityEvents" && key == "RoadsideHikerChancePercent") RoadsideHikerChancePercent = integer;
+                else if (section == "Traffic" && key == "MaxAdditionalVehicles") MaxAdditionalTrafficVehicles = integer;
+                else if (section == "Traffic" && key == "SpawnIntervalSeconds") TrafficSpawnIntervalSeconds = integer;
+                else if (section == "Traffic" && key == "SpawnMinDistanceMeters") TrafficSpawnMinDistanceMeters = integer;
+                else if (section == "Traffic" && key == "SpawnMaxDistanceMeters") TrafficSpawnMaxDistanceMeters = integer;
+                else if (section == "Traffic" && key == "DespawnDistanceMeters") TrafficDespawnDistanceMeters = integer;
                 return;
             }
 
@@ -109,6 +126,8 @@ namespace LivingLosSantos.Core
                 else if (section == "LivingCity" && key == "NightTrafficMultiplier") NightTrafficMultiplier = number;
                 else if (section == "LivingCity" && key == "DayActivityMultiplier") DayActivityMultiplier = number;
                 else if (section == "LivingCity" && key == "NightActivityMultiplier") NightActivityMultiplier = number;
+                else if (section == "Traffic" && key == "VanillaDensity") VanillaTrafficDensity = number;
+                else if (section == "Traffic" && key == "ParkedDensity") ParkedVehicleDensity = number;
             }
         }
 
@@ -128,19 +147,64 @@ namespace LivingLosSantos.Core
             MorningStart = Math.Max(0, Math.Min(23, MorningStart));
             EveningStart = Math.Max(0, Math.Min(23, EveningStart));
             NightStart = Math.Max(0, Math.Min(23, NightStart));
+
+            MaxAdditionalTrafficVehicles = Math.Max(0, Math.Min(10, MaxAdditionalTrafficVehicles));
+            TrafficSpawnIntervalSeconds = Math.Max(5, Math.Min(60, TrafficSpawnIntervalSeconds));
+            TrafficSpawnMinDistanceMeters = Math.Max(80, Math.Min(350, TrafficSpawnMinDistanceMeters));
+            TrafficSpawnMaxDistanceMeters = Math.Max(TrafficSpawnMinDistanceMeters + 25,
+                Math.Min(500, TrafficSpawnMaxDistanceMeters));
+            TrafficDespawnDistanceMeters = Math.Max(TrafficSpawnMaxDistanceMeters + 50,
+                Math.Min(900, TrafficDespawnDistanceMeters));
+            VanillaTrafficDensity = Math.Max(0f, Math.Min(1f, VanillaTrafficDensity));
+            ParkedVehicleDensity = Math.Max(0f, Math.Min(1f, ParkedVehicleDensity));
         }
 
-        private void Save(string path)
+        public void Save(string path)
         {
+            Clamp();
             string directory = Path.GetDirectoryName(path);
             if (!string.IsNullOrEmpty(directory))
                 Directory.CreateDirectory(directory);
 
-            File.WriteAllText(path,
-                "[General]\nEnabled=true\nDebugMode=false\nShowNotifications=true\n\n" +
-                "[Performance]\nUpdateIntervalMs=1000\nMinimumEventDistance=150\nMaximumEventDistance=300\nMaxActiveEvents=3\nRoadsideOffsetMinMeters=2.0\nRoadsideOffsetMaxMeters=6.0\n\n" +
-                "[LivingCity]\nEnabled=true\nMorningStart=6\nEveningStart=19\nNightStart=23\nDayTrafficMultiplier=1.0\nNightTrafficMultiplier=0.75\nDayActivityMultiplier=1.0\nNightActivityMultiplier=0.65\n\n" +
-                "[CityEvents]\nEnabled=true\nEventCheckIntervalSeconds=30\nEventChancePercent=75\nRoadsideBreakdownEnabled=true\nRoadsideHikerEnabled=true\nRoadsideHikerChancePercent=20\nRuralSearchAttempts=18\nRuralSpawnPreferencePercent=90\n");
+            string text =
+                "[General]\n" +
+                "Enabled=" + Enabled.ToString().ToLowerInvariant() + "\n" +
+                "DebugMode=" + DebugMode.ToString().ToLowerInvariant() + "\n" +
+                "ShowNotifications=" + ShowNotifications.ToString().ToLowerInvariant() + "\n\n" +
+                "[Performance]\n" +
+                "UpdateIntervalMs=" + UpdateIntervalMs.ToString(CultureInfo.InvariantCulture) + "\n" +
+                "MinimumEventDistance=" + MinimumEventDistance.ToString("0.##", CultureInfo.InvariantCulture) + "\n" +
+                "MaximumEventDistance=" + MaximumEventDistance.ToString("0.##", CultureInfo.InvariantCulture) + "\n" +
+                "MaxActiveEvents=" + MaxActiveEvents.ToString(CultureInfo.InvariantCulture) + "\n" +
+                "RoadsideOffsetMinMeters=" + RoadsideOffsetMinMeters.ToString("0.##", CultureInfo.InvariantCulture) + "\n" +
+                "RoadsideOffsetMaxMeters=" + RoadsideOffsetMaxMeters.ToString("0.##", CultureInfo.InvariantCulture) + "\n\n" +
+                "[LivingCity]\n" +
+                "Enabled=" + LivingCityEnabled.ToString().ToLowerInvariant() + "\n" +
+                "MorningStart=" + MorningStart.ToString(CultureInfo.InvariantCulture) + "\n" +
+                "EveningStart=" + EveningStart.ToString(CultureInfo.InvariantCulture) + "\n" +
+                "NightStart=" + NightStart.ToString(CultureInfo.InvariantCulture) + "\n" +
+                "DayTrafficMultiplier=" + DayTrafficMultiplier.ToString("0.##", CultureInfo.InvariantCulture) + "\n" +
+                "NightTrafficMultiplier=" + NightTrafficMultiplier.ToString("0.##", CultureInfo.InvariantCulture) + "\n" +
+                "DayActivityMultiplier=" + DayActivityMultiplier.ToString("0.##", CultureInfo.InvariantCulture) + "\n" +
+                "NightActivityMultiplier=" + NightActivityMultiplier.ToString("0.##", CultureInfo.InvariantCulture) + "\n\n" +
+                "[CityEvents]\n" +
+                "Enabled=" + CityEventsEnabled.ToString().ToLowerInvariant() + "\n" +
+                "EventCheckIntervalSeconds=" + EventCheckIntervalSeconds.ToString(CultureInfo.InvariantCulture) + "\n" +
+                "EventChancePercent=" + EventChancePercent.ToString(CultureInfo.InvariantCulture) + "\n" +
+                "RoadsideBreakdownEnabled=" + RoadsideBreakdownEnabled.ToString().ToLowerInvariant() + "\n" +
+                "RoadsideHikerEnabled=" + RoadsideHikerEnabled.ToString().ToLowerInvariant() + "\n" +
+                "RoadsideHikerChancePercent=" + RoadsideHikerChancePercent.ToString(CultureInfo.InvariantCulture) + "\n" +
+                "RuralSearchAttempts=" + RuralSearchAttempts.ToString(CultureInfo.InvariantCulture) + "\n" +
+                "RuralSpawnPreferencePercent=" + RuralSpawnPreferencePercent.ToString(CultureInfo.InvariantCulture) + "\n\n" +
+                "[Traffic]\n" +
+                "Enabled=" + TrafficEnabled.ToString().ToLowerInvariant() + "\n" +
+                "MaxAdditionalVehicles=" + MaxAdditionalTrafficVehicles.ToString(CultureInfo.InvariantCulture) + "\n" +
+                "SpawnIntervalSeconds=" + TrafficSpawnIntervalSeconds.ToString(CultureInfo.InvariantCulture) + "\n" +
+                "SpawnMinDistanceMeters=" + TrafficSpawnMinDistanceMeters.ToString(CultureInfo.InvariantCulture) + "\n" +
+                "SpawnMaxDistanceMeters=" + TrafficSpawnMaxDistanceMeters.ToString(CultureInfo.InvariantCulture) + "\n" +
+                "DespawnDistanceMeters=" + TrafficDespawnDistanceMeters.ToString(CultureInfo.InvariantCulture) + "\n" +
+                "VanillaDensity=" + VanillaTrafficDensity.ToString("0.##", CultureInfo.InvariantCulture) + "\n" +
+                "ParkedDensity=" + ParkedVehicleDensity.ToString("0.##", CultureInfo.InvariantCulture) + "\n";
+
+            File.WriteAllText(path, text);
         }
-    }
-}

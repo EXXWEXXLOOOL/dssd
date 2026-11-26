@@ -42,6 +42,20 @@ jobs:
           Copy-Item $api.FullName (Join-Path $refs 'scripts\ScriptHookVDotNet3.dll')
           "SHVDN_ROOT=$refs" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
+      - name: Download LemonUI SHVDN3 2.2.0
+        shell: pwsh
+        run: |
+          $archive = Join-Path $env:RUNNER_TEMP 'lemonui-shvdn3-2.2.0.nupkg'
+          $install = Join-Path $env:RUNNER_TEMP 'lemonui-shvdn3-2.2.0'
+          $downloadUrl = 'https://api.nuget.org/v3-flatcontainer/lemonui.shvdn3/2.2.0/lemonui.shvdn3.2.2.0.nupkg'
+          Invoke-WebRequest -Uri $downloadUrl -OutFile $archive -Headers @{ 'User-Agent' = 'LivingLosSantos-CI' }
+          Expand-Archive -Path $archive -DestinationPath $install -Force
+          $lemon = Get-ChildItem -Path $install -Recurse -Filter 'LemonUI.SHVDN3.dll' | Select-Object -First 1
+          if (-not $lemon) { throw 'LemonUI.SHVDN3.dll was not found in the NuGet package.' }
+          $scripts = Join-Path $env:SHVDN_ROOT 'scripts'
+          Copy-Item $lemon.FullName (Join-Path $scripts 'LemonUI.SHVDN3.dll') -Force
+          Write-Host "Using LemonUI SHVDN3 from $($lemon.FullName)"
+
       - name: Build Release
         run: msbuild src/LivingLosSantos.sln /m /p:Configuration=Release /p:Platform="Any CPU" /p:GtaVPath="$env:SHVDN_ROOT" /verbosity:minimal
 
@@ -51,6 +65,8 @@ jobs:
           $package = Join-Path $env:RUNNER_TEMP 'LivingLosSantos'
           New-Item -ItemType Directory -Force -Path $package | Out-Null
           Copy-Item 'src/LivingLosSantos/bin/Release/LivingLosSantos.dll' $package
+          Copy-Item 'src/LivingLosSantos/bin/Release/LemonUI.SHVDN3.dll' $package
+          Copy-Item 'THIRD_PARTY_NOTICES.txt' $package
           Copy-Item 'config.ini' $package
           Compress-Archive -Path (Join-Path $package '*') -DestinationPath 'LivingLosSantos.zip' -Force
 
