@@ -208,3 +208,5 @@ namespace LivingLosSantos.Core
 
             File.WriteAllText(path, text);
         }
+    }
+}
