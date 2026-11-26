@@ -11,7 +11,9 @@ A ScriptHookVDotNet 3 mod for **GTA V Legacy (single-player)**. It provides an i
 - Up to three active roadside scenes. Each vehicle remains for about four minutes.
 - Configurable event spawn distances, shoulder offset, rural search attempts, and rural-area preference.
 - In-game LemonUI settings menu, opened with **F10**, with live toggles, moving/parked traffic density sliders, presets, and automatic config saving.
-- Traffic controls scale Rockstar's ambient population each frame. The mod does not create artificial cars, force traffic into the player's view, or delete cars to make room.
+- Frame-based native controls scale Rockstar's moving, parked and pedestrian populations.
+- A separate, bounded additive traffic manager preloads optional vehicle models asynchronously, chooses valid road nodes ahead of the player, rejects visible/occupied/steep/off-road nodes, and creates a driver for each extra vehicle.
+- Additional cars are spawned outside the camera view and are cleaned up only when distant and off-screen, in water, driverless, or expired. Vehicles taken by the player are no longer managed or deleted.
 - File logging with fallback locations under the user's LocalAppData and Temp folders.
 
 ## Recommended traffic overhaul for this exact game build
@@ -34,14 +36,16 @@ The mod page and author documentation:
 - https://www.nexusmods.com/gta5/mods/1505
 - https://www.nexusmods.com/gta5/mods/1505?tab=docs
 
-## How the F10 traffic controls work
+## Scripted additive traffic and F10 controls
 
-GTA's frame-based density natives scale the population but do not build a new population pool. A multiplier of 1.0 is the full population configured by the game; lower values reduce that density. Therefore **the actual increase comes from the compatible population-data overhaul above**, not from setting the native multiplier above 1.0.
+GTA's frame-based density natives scale the population but do not create new population slots. A multiplier of 1.0 is the normal/full configured density; lower values reduce it. The separate scripted manager adds a small number of extra NPC-driven vehicles on top of the ambient traffic. This is how we go beyond the vanilla population without pretending that a native multiplier above 1.0 is a reliable solution.
+
+The additive manager follows the publicly described design of Legacy traffic scripts such as TrafficAddon: preload models, use road nodes outside the camera view, spawn a driver, and clean up vehicles that leave the active area. It is an independent implementation; no third-party source files or assets are included.
 
 Presets:
-- **Low:** moving 60%, parked 60%.
-- **Realistic:** moving 85%, parked 80%.
-- **Busy:** moving 100%, parked 100% — uses the full density configured by the game files.
+- **Low:** moving 60%, parked 60%, 2 extra cars, 35% spawn chance every 28 seconds.
+- **Realistic:** moving 85%, parked 80%, 4 extra cars, 65% spawn chance every 14 seconds.
+- **Busy:** moving/parked/pedestrian density 100%, up to 7 extra cars, 80% spawn chance every 8 seconds.
 
 The in-game GTA population density setting may also affect the final result. Start at the recommended setting in the external overhaul's readme, then adjust with F10.
 
@@ -91,12 +95,12 @@ The event roll is probabilistic, so a roadside scene is not guaranteed at each c
 
 ## Current limitations
 
-This is an early milestone, not a full city-life simulation. Pedestrian rescue/repair behavior, mechanics, emergency response, collision scenes, venue visits, and scheduled NPC routines are not implemented yet. Traffic density depends on compatible game population files if you want values above the game's vanilla population.
+This is an early milestone, not a full city-life simulation. Pedestrian rescue/repair behavior, mechanics, emergency response, collision scenes, venue visits, and scheduled NPC routines are not implemented yet. Extra traffic uses a configurable vehicle model pool. Add-on vehicle names work only when those models are already correctly installed in the game; unavailable models are skipped. The exact visual behavior and performance still need in-game testing.
 
 ## Performance and cleanup
 
-- Density natives and menu processing run every frame; event selection runs on a bounded timer.
-- The script does not maintain a second population of artificial AI traffic vehicles.
+- Density natives and menu processing run every frame; vehicle scanning/spawning and event selection run on a bounded timer.
+- Additional traffic is capped at 10 vehicles, models are preloaded asynchronously one at a time, and each car must pass road-node, camera visibility, nearby-vehicle and slope checks.
 - Only a limited number of roadside event entities can be active simultaneously.
 - Event vehicles and pedestrians are removed after their lifetime or when the script is aborted.
 - Logs are written to the game scripts folder when writable, with LocalAppData/Temp fallbacks.

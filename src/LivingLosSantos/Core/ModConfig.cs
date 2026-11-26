@@ -36,6 +36,23 @@ namespace LivingLosSantos.Core
         public bool TrafficEnabled = true;
         public float TrafficDensityMultiplier = 1.0f;
         public float ParkedVehicleDensity = 1.0f;
+        public float PedDensityMultiplier = 1.0f;
+        public float ScenarioPedDensityMultiplier = 1.0f;
+
+        // Extra scripted traffic is additive: it creates a small, bounded number
+        // of vehicles ahead of the player, outside the camera view.
+        public bool AdditionalTrafficEnabled = true;
+        public int MaxAdditionalTrafficVehicles = 4;
+        public int TrafficSpawnIntervalSeconds = 14;
+        public int TrafficSpawnChancePercent = 65;
+        public int TrafficSpawnMinDistanceMeters = 105;
+        public int TrafficSpawnMaxDistanceMeters = 165;
+        public int TrafficDespawnDistanceMeters = 340;
+        public int TrafficMaxSlopePercent = 10;
+        public int TrafficMinimumNodeDensity = 2;
+        public bool TrafficOnlyMainRoads = true;
+        public string TrafficVehicleModels =
+            "asea,asterope,buffalo,cavalcade,comet2,dubsta,fugitive,gauntlet,granger,ingot,intruder,jackal,oracle,premier,primo,ruiner,sabregt,schafter2,stanier,stratum,tailgater,washington,jugular,komoda,sugoi,sultan3,paragon,pariah,italigto,vagner,neo,drafter,growler,cypher,vstr,tenf,tenf2,zr350";
 
         public static ModConfig Load(string path)
         {
@@ -87,6 +104,8 @@ namespace LivingLosSantos.Core
                 else if (section == "CityEvents" && key == "RoadsideBreakdownEnabled") RoadsideBreakdownEnabled = boolean;
                 else if (section == "CityEvents" && key == "RoadsideHikerEnabled") RoadsideHikerEnabled = boolean;
                 else if (section == "Traffic" && key == "Enabled") TrafficEnabled = boolean;
+                else if (section == "Traffic" && key == "AdditionalTrafficEnabled") AdditionalTrafficEnabled = boolean;
+                else if (section == "Traffic" && key == "OnlyMainRoads") TrafficOnlyMainRoads = boolean;
                 return;
             }
 
@@ -102,6 +121,14 @@ namespace LivingLosSantos.Core
                 else if (section == "CityEvents" && key == "RuralSearchAttempts") RuralSearchAttempts = integer;
                 else if (section == "CityEvents" && key == "RuralSpawnPreferencePercent") RuralSpawnPreferencePercent = integer;
                 else if (section == "CityEvents" && key == "RoadsideHikerChancePercent") RoadsideHikerChancePercent = integer;
+                else if (section == "Traffic" && key == "MaxAdditionalVehicles") MaxAdditionalTrafficVehicles = integer;
+                else if (section == "Traffic" && key == "SpawnIntervalSeconds") TrafficSpawnIntervalSeconds = integer;
+                else if (section == "Traffic" && key == "SpawnChancePercent") TrafficSpawnChancePercent = integer;
+                else if (section == "Traffic" && key == "SpawnMinDistanceMeters") TrafficSpawnMinDistanceMeters = integer;
+                else if (section == "Traffic" && key == "SpawnMaxDistanceMeters") TrafficSpawnMaxDistanceMeters = integer;
+                else if (section == "Traffic" && key == "DespawnDistanceMeters") TrafficDespawnDistanceMeters = integer;
+                else if (section == "Traffic" && key == "MaxSlopePercent") TrafficMaxSlopePercent = integer;
+                else if (section == "Traffic" && key == "MinimumNodeDensity") TrafficMinimumNodeDensity = integer;
                 return;
             }
 
@@ -115,6 +142,8 @@ namespace LivingLosSantos.Core
                 else if (section == "LivingCity" && key == "NightActivityMultiplier") NightActivityMultiplier = number;
                 else if (section == "Traffic" && (key == "DensityMultiplier" || key == "VanillaDensity")) TrafficDensityMultiplier = number;
                 else if (section == "Traffic" && key == "ParkedDensity") ParkedVehicleDensity = number;
+                else if (section == "Traffic" && key == "PedDensity") PedDensityMultiplier = number;
+                else if (section == "Traffic" && key == "ScenarioPedDensity") ScenarioPedDensityMultiplier = number;
             }
         }
 
@@ -137,6 +166,21 @@ namespace LivingLosSantos.Core
 
             TrafficDensityMultiplier = Math.Max(0f, Math.Min(1f, TrafficDensityMultiplier));
             ParkedVehicleDensity = Math.Max(0f, Math.Min(1f, ParkedVehicleDensity));
+            PedDensityMultiplier = Math.Max(0f, Math.Min(1f, PedDensityMultiplier));
+            ScenarioPedDensityMultiplier = Math.Max(0f, Math.Min(1f, ScenarioPedDensityMultiplier));
+
+            MaxAdditionalTrafficVehicles = Math.Max(0, Math.Min(10, MaxAdditionalTrafficVehicles));
+            TrafficSpawnIntervalSeconds = Math.Max(5, Math.Min(90, TrafficSpawnIntervalSeconds));
+            TrafficSpawnChancePercent = Math.Max(0, Math.Min(100, TrafficSpawnChancePercent));
+            TrafficSpawnMinDistanceMeters = Math.Max(70, Math.Min(250, TrafficSpawnMinDistanceMeters));
+            TrafficSpawnMaxDistanceMeters = Math.Max(TrafficSpawnMinDistanceMeters + 20,
+                Math.Min(300, TrafficSpawnMaxDistanceMeters));
+            TrafficDespawnDistanceMeters = Math.Max(TrafficSpawnMaxDistanceMeters + 50,
+                Math.Min(700, TrafficDespawnDistanceMeters));
+            TrafficMaxSlopePercent = Math.Max(1, Math.Min(35, TrafficMaxSlopePercent));
+            TrafficMinimumNodeDensity = Math.Max(0, Math.Min(15, TrafficMinimumNodeDensity));
+            if (string.IsNullOrWhiteSpace(TrafficVehicleModels))
+                TrafficVehicleModels = "asea,asterope,buffalo,stanier,tailgater";
         }
 
         public void Save(string path)
@@ -177,7 +221,20 @@ namespace LivingLosSantos.Core
                 "[Traffic]\n" +
                 "Enabled=" + TrafficEnabled.ToString().ToLowerInvariant() + "\n" +
                 "DensityMultiplier=" + TrafficDensityMultiplier.ToString("0.##", CultureInfo.InvariantCulture) + "\n" +
-                "ParkedDensity=" + ParkedVehicleDensity.ToString("0.##", CultureInfo.InvariantCulture) + "\n";
+                "ParkedDensity=" + ParkedVehicleDensity.ToString("0.##", CultureInfo.InvariantCulture) + "\n" +
+                "PedDensity=" + PedDensityMultiplier.ToString("0.##", CultureInfo.InvariantCulture) + "\n" +
+                "ScenarioPedDensity=" + ScenarioPedDensityMultiplier.ToString("0.##", CultureInfo.InvariantCulture) + "\n" +
+                "AdditionalTrafficEnabled=" + AdditionalTrafficEnabled.ToString().ToLowerInvariant() + "\n" +
+                "MaxAdditionalVehicles=" + MaxAdditionalTrafficVehicles.ToString(CultureInfo.InvariantCulture) + "\n" +
+                "SpawnIntervalSeconds=" + TrafficSpawnIntervalSeconds.ToString(CultureInfo.InvariantCulture) + "\n" +
+                "SpawnChancePercent=" + TrafficSpawnChancePercent.ToString(CultureInfo.InvariantCulture) + "\n" +
+                "SpawnMinDistanceMeters=" + TrafficSpawnMinDistanceMeters.ToString(CultureInfo.InvariantCulture) + "\n" +
+                "SpawnMaxDistanceMeters=" + TrafficSpawnMaxDistanceMeters.ToString(CultureInfo.InvariantCulture) + "\n" +
+                "DespawnDistanceMeters=" + TrafficDespawnDistanceMeters.ToString(CultureInfo.InvariantCulture) + "\n" +
+                "MaxSlopePercent=" + TrafficMaxSlopePercent.ToString(CultureInfo.InvariantCulture) + "\n" +
+                "MinimumNodeDensity=" + TrafficMinimumNodeDensity.ToString(CultureInfo.InvariantCulture) + "\n" +
+                "OnlyMainRoads=" + TrafficOnlyMainRoads.ToString().ToLowerInvariant() + "\n" +
+                "Models=" + TrafficVehicleModels + "\n";
 
             File.WriteAllText(path, text);
         }

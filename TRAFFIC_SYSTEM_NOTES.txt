@@ -1,0 +1,26 @@
+TRAFFIC SYSTEM NOTES
+
+Living Los Santos uses two separate layers:
+
+1. Native ambient density
+   The vehicle, random-vehicle, parked-vehicle, pedestrian and scenario-pedestrian
+   density natives are applied every frame. Their 1.0 value means normal/full
+   population configured by the game; it is not a way to create an unlimited
+   population above engine limits.
+
+2. Additional scripted traffic
+   A separate manager preloads one vehicle model asynchronously, searches road
+   nodes in a forward cone ahead of the player, checks road density and node flags,
+   rejects points visible to the gameplay camera, rejects occupied roads and steep
+   road surfaces, creates the vehicle and its random driver, then assigns a
+   standard wander-driving task.
+
+Additional vehicles are limited by MaxAdditionalVehicles and are deleted only
+when distant and off-screen, expired and off-screen, in water, or missing a driver.
+If the player enters one of these cars, the manager stops tracking it and leaves it
+alone. Add-on/DLC model names are user-configurable; missing models are skipped.
+
+A public Legacy reference with a similar feature set is TrafficAddon:
+https://www.nexusmods.com/gta5/mods/2751
+We use its published feature description as an architectural reference, not its
+source code. This project contains an independent implementation.

@@ -14,6 +14,10 @@ namespace LivingLosSantos.UI
         private readonly NativeItem _presetItem;
         private readonly NativeSliderItem _movingTrafficItem;
         private readonly NativeSliderItem _parkedTrafficItem;
+        private readonly NativeSliderItem _pedDensityItem;
+        private readonly NativeSliderItem _maxAdditionalItem;
+        private readonly NativeSliderItem _spawnIntervalItem;
+        private readonly NativeSliderItem _spawnChanceItem;
         private bool _updatingControls;
         private int _presetIndex = 2;
 
@@ -95,7 +99,84 @@ namespace LivingLosSantos.UI
             SetSliderTitle(_parkedTrafficItem, ((int)Math.Round(_config.ParkedVehicleDensity * 100f)) + "%");
             _menu.Add(_parkedTrafficItem);
 
-            _presetItem = new NativeItem("Traffic preset", "Choose Low, Realistic or Busy. Presets only scale the game's own traffic.");
+            _pedDensityItem = new NativeSliderItem(
+                "Pedestrian density",
+                "Scale ambient pedestrians. 100% is the game's normal configured density.",
+                100,
+                (int)Math.Round(_config.PedDensityMultiplier * 100f));
+            _pedDensityItem.ValueChanged += delegate
+            {
+                if (_updatingControls) return;
+                _config.PedDensityMultiplier = _pedDensityItem.Value / 100f;
+                SetSliderTitle(_pedDensityItem, _pedDensityItem.Value + "%");
+                MarkCustomPreset();
+                Save();
+            };
+            SetSliderTitle(_pedDensityItem, ((int)Math.Round(_config.PedDensityMultiplier * 100f)) + "%");
+            _menu.Add(_pedDensityItem);
+
+            _menu.Add(new NativeSeparatorItem("EXTRA AI TRAFFIC"));
+
+            var extraTrafficEnabled = new NativeCheckboxItem(
+                "Add extra AI cars",
+                "Spawn a few additional NPC-driven cars ahead of you, outside the camera view.",
+                _config.AdditionalTrafficEnabled);
+            extraTrafficEnabled.Activated += delegate
+            {
+                _config.AdditionalTrafficEnabled = extraTrafficEnabled.Checked;
+                Save();
+            };
+            _menu.Add(extraTrafficEnabled);
+
+            _maxAdditionalItem = new NativeSliderItem(
+                "Maximum extra cars",
+                "Maximum number of additional scripted cars alive around you.",
+                10,
+                _config.MaxAdditionalTrafficVehicles);
+            _maxAdditionalItem.ValueChanged += delegate
+            {
+                if (_updatingControls) return;
+                _config.MaxAdditionalTrafficVehicles = _maxAdditionalItem.Value;
+                SetSliderTitle(_maxAdditionalItem, _maxAdditionalItem.Value.ToString());
+                MarkCustomPreset();
+                Save();
+            };
+            SetSliderTitle(_maxAdditionalItem, _config.MaxAdditionalTrafficVehicles.ToString());
+            _menu.Add(_maxAdditionalItem);
+
+            _spawnIntervalItem = new NativeSliderItem(
+                "Spawn interval",
+                "Seconds between checks for another additional car.",
+                60,
+                _config.TrafficSpawnIntervalSeconds);
+            _spawnIntervalItem.ValueChanged += delegate
+            {
+                if (_updatingControls) return;
+                _config.TrafficSpawnIntervalSeconds = Math.Max(5, _spawnIntervalItem.Value);
+                SetSliderTitle(_spawnIntervalItem, _config.TrafficSpawnIntervalSeconds + "s");
+                MarkCustomPreset();
+                Save();
+            };
+            SetSliderTitle(_spawnIntervalItem, _config.TrafficSpawnIntervalSeconds + "s");
+            _menu.Add(_spawnIntervalItem);
+
+            _spawnChanceItem = new NativeSliderItem(
+                "Spawn chance",
+                "Chance to add a car on each eligible spawn check.",
+                100,
+                _config.TrafficSpawnChancePercent);
+            _spawnChanceItem.ValueChanged += delegate
+            {
+                if (_updatingControls) return;
+                _config.TrafficSpawnChancePercent = _spawnChanceItem.Value;
+                SetSliderTitle(_spawnChanceItem, _spawnChanceItem.Value + "%");
+                MarkCustomPreset();
+                Save();
+            };
+            SetSliderTitle(_spawnChanceItem, _config.TrafficSpawnChancePercent + "%");
+            _menu.Add(_spawnChanceItem);
+
+            _presetItem = new NativeItem("Traffic preset", "Choose Low, Realistic or Busy: normal population + additional AI cars.");
             DetectPreset();
             _presetItem.AltTitle = _presetIndex < 0 ? "CUSTOM" : PresetNames[_presetIndex];
             _presetItem.Activated += delegate { NextPreset(); };
@@ -121,14 +202,20 @@ namespace LivingLosSantos.UI
 
         private void DetectPreset()
         {
-            if (Math.Abs(_config.TrafficDensityMultiplier - 0.60f) < 0.01f &&
-                Math.Abs(_config.ParkedVehicleDensity - 0.60f) < 0.01f)
+            if (_config.MaxAdditionalTrafficVehicles == 2 &&
+                _config.TrafficSpawnIntervalSeconds == 28 &&
+                _config.TrafficSpawnChancePercent == 35 &&
+                Math.Abs(_config.TrafficDensityMultiplier - 0.60f) < 0.01f)
                 _presetIndex = 0;
-            else if (Math.Abs(_config.TrafficDensityMultiplier - 0.85f) < 0.01f &&
-                Math.Abs(_config.ParkedVehicleDensity - 0.80f) < 0.01f)
+            else if (_config.MaxAdditionalTrafficVehicles == 4 &&
+                _config.TrafficSpawnIntervalSeconds == 14 &&
+                _config.TrafficSpawnChancePercent == 65 &&
+                Math.Abs(_config.TrafficDensityMultiplier - 0.85f) < 0.01f)
                 _presetIndex = 1;
-            else if (Math.Abs(_config.TrafficDensityMultiplier - 1.0f) < 0.01f &&
-                Math.Abs(_config.ParkedVehicleDensity - 1.0f) < 0.01f)
+            else if (_config.MaxAdditionalTrafficVehicles == 7 &&
+                _config.TrafficSpawnIntervalSeconds == 8 &&
+                _config.TrafficSpawnChancePercent == 80 &&
+                Math.Abs(_config.TrafficDensityMultiplier - 1.0f) < 0.01f)
                 _presetIndex = 2;
             else
                 _presetIndex = -1;
@@ -143,22 +230,42 @@ namespace LivingLosSantos.UI
             {
                 _config.TrafficDensityMultiplier = 0.60f;
                 _config.ParkedVehicleDensity = 0.60f;
+                _config.PedDensityMultiplier = 0.65f;
+                _config.MaxAdditionalTrafficVehicles = 2;
+                _config.TrafficSpawnIntervalSeconds = 28;
+                _config.TrafficSpawnChancePercent = 35;
             }
             else if (_presetIndex == 1)
             {
                 _config.TrafficDensityMultiplier = 0.85f;
                 _config.ParkedVehicleDensity = 0.80f;
+                _config.PedDensityMultiplier = 0.85f;
+                _config.MaxAdditionalTrafficVehicles = 4;
+                _config.TrafficSpawnIntervalSeconds = 14;
+                _config.TrafficSpawnChancePercent = 65;
             }
             else
             {
                 _config.TrafficDensityMultiplier = 1.0f;
                 _config.ParkedVehicleDensity = 1.0f;
+                _config.PedDensityMultiplier = 1.0f;
+                _config.MaxAdditionalTrafficVehicles = 7;
+                _config.TrafficSpawnIntervalSeconds = 8;
+                _config.TrafficSpawnChancePercent = 80;
             }
 
             _movingTrafficItem.Value = (int)Math.Round(_config.TrafficDensityMultiplier * 100f);
             _parkedTrafficItem.Value = (int)Math.Round(_config.ParkedVehicleDensity * 100f);
+            _pedDensityItem.Value = (int)Math.Round(_config.PedDensityMultiplier * 100f);
+            _maxAdditionalItem.Value = _config.MaxAdditionalTrafficVehicles;
+            _spawnIntervalItem.Value = _config.TrafficSpawnIntervalSeconds;
+            _spawnChanceItem.Value = _config.TrafficSpawnChancePercent;
             SetSliderTitle(_movingTrafficItem, _movingTrafficItem.Value + "%");
             SetSliderTitle(_parkedTrafficItem, _parkedTrafficItem.Value + "%");
+            SetSliderTitle(_pedDensityItem, _pedDensityItem.Value + "%");
+            SetSliderTitle(_maxAdditionalItem, _maxAdditionalItem.Value.ToString());
+            SetSliderTitle(_spawnIntervalItem, _spawnIntervalItem.Value + "s");
+            SetSliderTitle(_spawnChanceItem, _spawnChanceItem.Value + "%");
             _presetItem.AltTitle = PresetNames[_presetIndex];
 
             _updatingControls = false;

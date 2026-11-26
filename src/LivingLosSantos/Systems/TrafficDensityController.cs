@@ -5,23 +5,31 @@ using LivingLosSantos.Core;
 namespace LivingLosSantos.Systems
 {
     /// <summary>
-    /// Scales Rockstar's ambient traffic population for the current frame.
-    /// The actual population and regional/time-of-day distribution come from
-    /// GTA's popcycle.dat, popgroups.ymt and gameconfig.xml.
+    /// Applies Rockstar's per-frame ambient population multipliers.
+    /// These scale the game-configured population; the separate TrafficManager
+    /// provides additional vehicles above the normal population.
     /// </summary>
     internal static class TrafficDensityController
     {
         public static void ApplyFrame(ModConfig config)
         {
-            if (config == null || !config.Enabled || !config.TrafficEnabled)
+            if (config == null || !config.Enabled)
                 return;
 
-            float movingDensity = Clamp01(config.TrafficDensityMultiplier);
-            float parkedDensity = Clamp01(config.ParkedVehicleDensity);
+            if (config.TrafficEnabled)
+            {
+                float moving = Clamp01(config.TrafficDensityMultiplier);
+                Function.Call(Hash.SET_VEHICLE_DENSITY_MULTIPLIER_THIS_FRAME, moving);
+                Function.Call(Hash.SET_RANDOM_VEHICLE_DENSITY_MULTIPLIER_THIS_FRAME, moving);
+                Function.Call(Hash.SET_PARKED_VEHICLE_DENSITY_MULTIPLIER_THIS_FRAME,
+                    Clamp01(config.ParkedVehicleDensity));
+            }
 
-            Function.Call(Hash.SET_VEHICLE_DENSITY_MULTIPLIER_THIS_FRAME, movingDensity);
-            Function.Call(Hash.SET_RANDOM_VEHICLE_DENSITY_MULTIPLIER_THIS_FRAME, movingDensity);
-            Function.Call(Hash.SET_PARKED_VEHICLE_DENSITY_MULTIPLIER_THIS_FRAME, parkedDensity);
+            Function.Call(Hash.SET_PED_DENSITY_MULTIPLIER_THIS_FRAME,
+                Clamp01(config.PedDensityMultiplier));
+            Function.Call(Hash.SET_SCENARIO_PED_DENSITY_MULTIPLIER_THIS_FRAME,
+                Clamp01(config.ScenarioPedDensityMultiplier),
+                Clamp01(config.ScenarioPedDensityMultiplier));
         }
 
         private static float Clamp01(float value)

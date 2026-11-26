@@ -14,6 +14,7 @@ namespace LivingLosSantos
         private UpdateScheduler _scheduler;
         private CityActivitySystem _cityActivity;
         private CityEventManager _cityEvents;
+        private TrafficManager _trafficManager;
         private CitySettingsMenu _settingsMenu;
         private string _configPath;
         private bool _initialized;
@@ -60,7 +61,11 @@ namespace LivingLosSantos
                     _settingsMenu.Process();
 
                 if (!_config.Enabled)
+                {
+                    if (_trafficManager != null)
+                        _trafficManager.StopAll();
                     return;
+                }
 
                 // GTA frame-based density controls must be applied on every frame.
                 TrafficDensityController.ApplyFrame(_config);
@@ -71,6 +76,11 @@ namespace LivingLosSantos
 
                 if (_config.LivingCityEnabled)
                     _cityActivity.Update();
+
+                if (_config.AdditionalTrafficEnabled)
+                    _trafficManager.Update(now);
+                else
+                    _trafficManager.StopAll();
 
                 if (_config.CityEventsEnabled)
                     _cityEvents.Update(now);
@@ -100,6 +110,7 @@ namespace LivingLosSantos
                 _scheduler = new UpdateScheduler(_config.UpdateIntervalMs);
                 _cityActivity = new CityActivitySystem(_config);
                 _cityEvents = new CityEventManager(_config);
+                _trafficManager = new TrafficManager(_config);
                 _settingsMenu = new CitySettingsMenu(_config, SaveConfig);
                 _initialized = true;
 
@@ -170,6 +181,8 @@ namespace LivingLosSantos
             {
                 if (_cityEvents != null)
                     _cityEvents.StopAll();
+                if (_trafficManager != null)
+                    _trafficManager.StopAll();
                 if (_settingsMenu != null)
                     _settingsMenu.Visible = false;
                 ModLog.Info("Living Los Santos stopped; active city events cleaned up.");

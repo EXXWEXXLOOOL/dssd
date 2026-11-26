@@ -44,6 +44,7 @@
     <Compile Include="Systems\CityActivitySystem.cs" />
     <Compile Include="Systems\CityEventManager.cs" />
     <Compile Include="Systems\TrafficDensityController.cs" />
+    <Compile Include="Systems\TrafficManager.cs" />
     <Compile Include="UI\CitySettingsMenu.cs" />
     <Compile Include="Systems\Events\RoadsideBreakdownEvent.cs" />
     <Compile Include="Systems\Events\RoadsideHikerEvent.cs" />
