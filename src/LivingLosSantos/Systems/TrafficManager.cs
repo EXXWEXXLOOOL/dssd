@@ -398,18 +398,10 @@ namespace LivingLosSantos.Systems
 
             try
             {
-                int handle = Function.Call<int>(
-                    Hash.CREATE_VEHICLE,
-                    _preloadedModel.Hash,
-                    candidate.Position.X, candidate.Position.Y, candidate.Position.Z,
-                    candidate.Heading,
-                    false, false);
-
-                if (handle == 0)
-                    return false;
-
-                vehicle = new Vehicle(handle);
-                if (!vehicle.Exists())
+                // The model has already been loaded asynchronously, so this call
+                // returns immediately rather than blocking on streaming.
+                vehicle = Vehicle.Create(_preloadedModel, candidate.Position, candidate.Heading);
+                if (vehicle == null || !vehicle.Exists())
                     return false;
 
                 bool placed = Function.Call<bool>(Hash.SET_VEHICLE_ON_GROUND_PROPERLY, vehicle.Handle);
