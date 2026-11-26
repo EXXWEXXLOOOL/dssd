@@ -5,6 +5,7 @@ on:
     branches: [ main ]
     paths:
       - 'src/**'
+      - 'config.ini'
       - '.github/workflows/build.yml'
   workflow_dispatch:
 
