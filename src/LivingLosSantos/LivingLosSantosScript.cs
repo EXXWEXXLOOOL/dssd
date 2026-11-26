@@ -13,11 +13,11 @@ namespace LivingLosSantos
         private CityActivitySystem _cityActivity;
         private CityEventManager _cityEvents;
         private bool _initialized;
+        private bool _initializationAttempted;
 
         public LivingLosSantosScript()
         {
             // Create the log as soon as SHVDN constructs this script.
-            // This distinguishes script loading from the first Tick callback.
             try
             {
                 string assemblyDirectory = Path.GetDirectoryName(typeof(LivingLosSantosScript).Assembly.Location);
@@ -39,8 +39,9 @@ namespace LivingLosSantos
 
         private void OnTick(object sender, EventArgs e)
         {
-            if (!_initialized)
+            if (!_initializationAttempted)
             {
+                _initializationAttempted = true;
                 ModLog.Info("First game tick received; initializing mod.");
                 Initialize();
             }
@@ -76,14 +77,15 @@ namespace LivingLosSantos
                 _cityEvents = new CityEventManager(_config);
                 _initialized = true;
 
-                ModLog.Info("Living Los Santos initialized.");
-                if (_config.ShowNotifications)
-                    GTA.UI.Screen.ShowSubtitle("~b~LIVING LOS SANTOS~s~ loaded", 5000);
+                // Screen.ShowSubtitle in the installed SHVDN/GTA combination
+                // throws from SHVDN.NativeMemory. Keep initialization independent
+                // from the optional HUD notification; use the log as confirmation.
+                ModLog.Info("Living Los Santos initialized. On-screen startup notification is disabled for compatibility.");
             }
             catch (Exception ex)
             {
-                ModLog.Error("Initialization failed.", ex);
                 _initialized = false;
+                ModLog.Error("Initialization failed. Script will not retry every frame; restart the game after fixing the reported error.", ex);
             }
         }
 
