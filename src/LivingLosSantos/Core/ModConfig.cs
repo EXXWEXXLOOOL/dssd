@@ -1,0 +1,129 @@
+using System;
+using System.Globalization;
+using System.IO;
+
+namespace LivingLosSantos.Core
+{
+    internal sealed class ModConfig
+    {
+        public bool Enabled = true;
+        public bool DebugMode = false;
+        public bool ShowNotifications = true;
+        public int UpdateIntervalMs = 1000;
+        public float MinimumEventDistance = 90f;
+        public float MaximumEventDistance = 180f;
+        public int MaxActiveEvents = 2;
+        public bool LivingCityEnabled = true;
+        public int MorningStart = 6;
+        public int EveningStart = 19;
+        public int NightStart = 23;
+        public float DayTrafficMultiplier = 1.0f;
+        public float NightTrafficMultiplier = 0.75f;
+        public float DayActivityMultiplier = 1.0f;
+        public float NightActivityMultiplier = 0.65f;
+        public bool CityEventsEnabled = true;
+        public int EventCheckIntervalSeconds = 75;
+        public int EventChancePercent = 35;
+        public bool RoadsideBreakdownEnabled = true;
+
+        public static ModConfig Load(string path)
+        {
+            var config = new ModConfig();
+            if (!File.Exists(path))
+            {
+                config.Save(path);
+                return config;
+            }
+
+            string section = string.Empty;
+            foreach (string rawLine in File.ReadAllLines(path))
+            {
+                string line = rawLine.Trim();
+                if (line.Length == 0 || line.StartsWith(";") || line.StartsWith("#"))
+                    continue;
+
+                if (line.StartsWith("[") && line.EndsWith("]"))
+                {
+                    section = line.Substring(1, line.Length - 2).Trim();
+                    continue;
+                }
+
+                int separator = line.IndexOf('=');
+                if (separator <= 0)
+                    continue;
+
+                string key = line.Substring(0, separator).Trim();
+                string value = line.Substring(separator + 1).Trim();
+                config.Apply(section, key, value);
+            }
+
+            config.Clamp();
+            return config;
+        }
+
+        private void Apply(string section, string key, string value)
+        {
+            bool boolean;
+            int integer;
+            float number;
+            if (bool.TryParse(value, out boolean))
+            {
+                if (section == "General" && key == "Enabled") Enabled = boolean;
+                else if (section == "General" && key == "DebugMode") DebugMode = boolean;
+                else if (section == "General" && key == "ShowNotifications") ShowNotifications = boolean;
+                else if (section == "LivingCity" && key == "Enabled") LivingCityEnabled = boolean;
+                else if (section == "CityEvents" && key == "Enabled") CityEventsEnabled = boolean;
+                else if (section == "CityEvents" && key == "RoadsideBreakdownEnabled") RoadsideBreakdownEnabled = boolean;
+                return;
+            }
+
+            if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out integer))
+            {
+                if (section == "Performance" && key == "UpdateIntervalMs") UpdateIntervalMs = integer;
+                else if (section == "Performance" && key == "MaxActiveEvents") MaxActiveEvents = integer;
+                else if (section == "LivingCity" && key == "MorningStart") MorningStart = integer;
+                else if (section == "LivingCity" && key == "EveningStart") EveningStart = integer;
+                else if (section == "LivingCity" && key == "NightStart") NightStart = integer;
+                else if (section == "CityEvents" && key == "EventCheckIntervalSeconds") EventCheckIntervalSeconds = integer;
+                else if (section == "CityEvents" && key == "EventChancePercent") EventChancePercent = integer;
+                return;
+            }
+
+            if (float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out number))
+            {
+                if (section == "Performance" && key == "MinimumEventDistance") MinimumEventDistance = number;
+                else if (section == "Performance" && key == "MaximumEventDistance") MaximumEventDistance = number;
+                else if (section == "LivingCity" && key == "DayTrafficMultiplier") DayTrafficMultiplier = number;
+                else if (section == "LivingCity" && key == "NightTrafficMultiplier") NightTrafficMultiplier = number;
+                else if (section == "LivingCity" && key == "DayActivityMultiplier") DayActivityMultiplier = number;
+                else if (section == "LivingCity" && key == "NightActivityMultiplier") NightActivityMultiplier = number;
+            }
+        }
+
+        private void Clamp()
+        {
+            UpdateIntervalMs = Math.Max(250, Math.Min(10000, UpdateIntervalMs));
+            MinimumEventDistance = Math.Max(20f, MinimumEventDistance);
+            MaximumEventDistance = Math.Max(MinimumEventDistance + 10f, MaximumEventDistance);
+            MaxActiveEvents = Math.Max(0, Math.Min(10, MaxActiveEvents));
+            EventCheckIntervalSeconds = Math.Max(10, EventCheckIntervalSeconds);
+            EventChancePercent = Math.Max(0, Math.Min(100, EventChancePercent));
+            MorningStart = Math.Max(0, Math.Min(23, MorningStart));
+            EveningStart = Math.Max(0, Math.Min(23, EveningStart));
+            NightStart = Math.Max(0, Math.Min(23, NightStart));
+        }
+
+        private void Save(string path)
+        {
+            string directory = Path.GetDirectoryName(path);
+            if (!string.IsNullOrEmpty(directory))
+                Directory.CreateDirectory(directory);
+
+            File.WriteAllText(path,
+                "[General]\nEnabled=true\nDebugMode=false\nShowNotifications=true\n\n" +
+                "[Performance]\nUpdateIntervalMs=1000\nMinimumEventDistance=90\nMaximumEventDistance=180\nMaxActiveEvents=2\n\n" +
+                "[LivingCity]\nEnabled=true\nMorningStart=6\nEveningStart=19\nNightStart=23\nDayTrafficMultiplier=1.0\nNightTrafficMultiplier=0.75\nDayActivityMultiplier=1.0\nNightActivityMultiplier=0.65\n\n" +
+                "[CityEvents]\nEnabled=true\nEventCheckIntervalSeconds=75\nEventChancePercent=35\nRoadsideBreakdownEnabled=true\n");
+        }
+    }
+}
