@@ -9,44 +9,55 @@ namespace LivingLosSantos.Systems.Events
     {
         private readonly Vector3 _position;
         private readonly float _heading;
+        private readonly VehicleHash _vehicleModel;
+        private readonly string _zoneName;
         private Vehicle _vehicle;
         private DateTime _expiresAt;
 
-        public RoadsideBreakdownEvent(Vector3 position, float heading)
+        public RoadsideBreakdownEvent(Vector3 position, float heading, VehicleHash vehicleModel, string zoneName)
         {
             _position = position;
             _heading = heading;
+            _vehicleModel = vehicleModel;
+            _zoneName = zoneName;
         }
 
         public bool Start()
         {
+            Model model = new Model(_vehicleModel);
             try
             {
-                Model model = new Model(VehicleHash.Asea);
                 if (!model.IsInCdImage || !model.IsValid)
                     return false;
 
-                model.Request(1000);
+                model.Request(2000);
                 if (!model.IsLoaded)
+                {
+                    ModLog.Warn("Timed out loading breakdown vehicle model: " + _vehicleModel);
                     return false;
+                }
 
                 _vehicle = World.CreateVehicle(model, _position, _heading);
-                model.MarkAsNoLongerNeeded();
-
                 if (_vehicle == null || !_vehicle.Exists())
                     return false;
 
                 _vehicle.IsPersistent = true;
-                _vehicle.EngineHealth = 120f;
+                _vehicle.EngineHealth = 35f;
                 _vehicle.IsDriveable = false;
-                _expiresAt = DateTime.Now.AddMinutes(3);
+                _expiresAt = DateTime.Now.AddMinutes(4);
+
+                ModLog.Info(string.Format("Spawned broken-down {0} at {1}.", _vehicleModel, _zoneName));
                 return true;
             }
             catch (Exception ex)
             {
-                ModLog.Error("Could not create roadside breakdown event.", ex);
+                ModLog.Error("Could not create roadside breakdown event for " + _vehicleModel + ".", ex);
                 Cleanup();
                 return false;
+            }
+            finally
+            {
+                model.MarkAsNoLongerNeeded();
             }
         }
 
