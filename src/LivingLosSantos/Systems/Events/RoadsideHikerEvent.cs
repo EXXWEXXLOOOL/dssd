@@ -1,6 +1,7 @@
 using System;
 using GTA;
 using GTA.Math;
+using GTA.Native;
 using LivingLosSantos.Core;
 using LivingLosSantos.Systems;
 
@@ -46,11 +47,11 @@ namespace LivingLosSantos.Systems.Events
                     return false;
                 }
 
-                _ped = World.CreatePed(model, _position, (_heading + 180f) % 360f);
+                _ped = Ped.Create(model, _position, (_heading + 180f) % 360f);
                 if (_ped == null || !_ped.Exists())
                     return false;
 
-                if (GTA.Native.Function.Call<bool>(GTA.Native.Hash.IS_POINT_ON_ROAD,
+                if (Function.Call<bool>(Hash.IS_POINT_ON_ROAD,
                     _ped.Position.X, _ped.Position.Y, _ped.Position.Z, 0))
                 {
                     ModLog.Warn("Rejected hiker spawn because the pedestrian is still on the road.");
@@ -60,8 +61,8 @@ namespace LivingLosSantos.Systems.Events
 
                 _ped.IsPersistent = true;
                 _ped.BlockPermanentEvents = true;
-                _ped.AlwaysKeepTask = true;
-                _ped.Task.StartScenarioInPlace("WORLD_HUMAN_STAND_MOBILE", true);
+                _ped.KeepTaskWhenMarkedAsNoLongerNeeded = true;
+                _ped.Task.StartScenarioInPlace("WORLD_HUMAN_STAND_MOBILE", -1, true);
                 _expiresAt = DateTime.Now.AddMinutes(3);
 
                 ModLog.Info("Spawned roadside hiker " + modelName + " in " + _zoneName + ".");

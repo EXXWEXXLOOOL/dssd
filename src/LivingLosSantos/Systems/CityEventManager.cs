@@ -116,8 +116,8 @@ namespace LivingLosSantos.Systems
                     cityEvent = breakdown;
                     _lastVehicleModel = vehicleModel;
                     ModLog.Info(string.Format(
-                        "Started roadside breakdown: {0} in {1}, rural={2}, {1:0.0}m from player.",
-                        vehicleModel, roadside.Zone, roadside.IsRural));
+                        "Started roadside breakdown: {0} in zone {1}, rural={2}, {3:0}m from player, {4:0.0}m beyond road edge.",
+                        vehicleModel, roadside.Zone, roadside.IsRural, roadside.Distance, roadside.ExtraOffset));
                 }
             }
 
@@ -258,8 +258,6 @@ namespace LivingLosSantos.Systems
                                 {
                                     candidate.Z = groundArgument.GetResult<float>();
 
-                                    // Recheck after ground correction. Never use a point that
-                                    // GTA reports as part of the drivable road surface.
                                     if (!Function.Call<bool>(
                                         Hash.IS_POINT_ON_ROAD, candidate.X, candidate.Y, candidate.Z, 0))
                                     {

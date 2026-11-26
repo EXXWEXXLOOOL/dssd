@@ -39,7 +39,7 @@ namespace LivingLosSantos.Systems.Events
                     return false;
                 }
 
-                _vehicle = World.CreateVehicle(model, _position, _heading);
+                _vehicle = Vehicle.Create(model, _position, _heading);
                 if (_vehicle == null || !_vehicle.Exists())
                     return false;
 
@@ -54,7 +54,7 @@ namespace LivingLosSantos.Systems.Events
                 Function.Call<bool>(Hash.SET_VEHICLE_ON_GROUND_PROPERLY, _vehicle.Handle);
                 _vehicle.IsPersistent = true;
                 _vehicle.EngineHealth = 35f;
-                _vehicle.IsDriveable = false;
+                _vehicle.IsUndriveable = true;
                 _expiresAt = DateTime.Now.AddMinutes(4);
 
                 ModLog.Info(string.Format("Spawned broken-down {0} on the shoulder in {1}.", _vehicleModel, _zoneName));
